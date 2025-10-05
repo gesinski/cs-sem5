@@ -1,1 +1,7 @@
-keywords = 3
+keywords = 5
+numbers = 3
+arithmetics = 1
+string = 2
+comments = 2
+variables = 14
+lines = 15
