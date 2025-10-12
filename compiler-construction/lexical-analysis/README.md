@@ -36,13 +36,13 @@ D. Remove inline comments (starting with !, ending with ;)  ✓
 E. Remove end-line comments (starting with the keyword end and ending with a semicolon ; on the same line; the semicolon is not part of the comment) - worth 2 points  ✓
 F. Detect multi-character operators (<=, :=, etc.) found in the test programs  ✓
 G. Detect identifiers ✓ 
-H. Detect unsigned integers (ignore different bases, only normal integers)  
-I. Detect floating-point numbers (same rule as above)  
-J. Detect string constants (without using start conditions; ignore double quotes inside strings, include this rule as a comment)  
-K. Detect character constants  
-L. Detect single-character terminal symbols (operators, punctuation marks, etc.)  
-M. Detect strings using start conditions - two consecutive double quotes ("") represent a single quote  
-N. Detect unclosed comments and indicate the line number where the comment started (using start conditions)
+H. Detect unsigned integers (ignore different bases, only normal integers)  ✓
+I. Detect floating-point numbers (same rule as above)  ✓
+J. Detect string constants (without using start conditions; ignore double quotes inside strings, include this rule as a comment)  ✓
+K. Detect character constants  ✓
+L. Detect single-character terminal symbols (operators, punctuation marks, etc.)  ✓
+M. Detect strings using start conditions - two consecutive double quotes ("") represent a single quote  ✓
+N. Detect unclosed comments and indicate the line number where the comment started (using start conditions) ✓
 
 ## 4. Grading
 

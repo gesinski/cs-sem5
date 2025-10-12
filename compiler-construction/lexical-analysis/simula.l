@@ -3,6 +3,7 @@
 #include <string.h> /* strcpy */
 #include <stdlib.h> /* atoi(), atof() */
 #include "common.h" /* MAX_STR_LEN */
+#include <ctype.h>
 #include "simula.tab.h" /* declaration of terminals */
 
 /* printing information about the terminal found */
@@ -38,46 +39,10 @@ uint	[0-9]+|(2|4|8|16)[Rr][0-9A-Fa-f]+
 (?i:boolean)      return process_token(yytext, "KW_BOOLEAN", "", KW_BOOLEAN);
 (?i:character)    return process_token(yytext, "KW_CHARACTER", "", KW_CHARACTER);
 (?i:class)        return process_token(yytext, "KW_CLASS", "", KW_CLASS);
-(?i:comment)      return process_token(yytext, "KW_COMMENT", "", KW_COMMENT);
 (?i:delay)        return process_token(yytext, "KW_DELAY", "", KW_DELAY);
 (?i:do)           return process_token(yytext, "KW_DO", "", KW_DO);
 (?i:else)         return process_token(yytext, "KW_ELSE", "", KW_ELSE);
-(?i:end)  {
-    comm_beg = yylineno;
-
-    char *p = yytext;
-    int c = input();
-
-    while (c == ' ' || c == '\t' || c == '\n') {
-        c = input();
-    }
-
-    if (c == EOF) {
-        return process_token("END", "KW_END", "", KW_END);
-    }
-
-    if (c == 'C' || c == 'c') {
-        char buffer[10];
-        buffer[0] = (char)c;
-        for (int i = 1; i < 7; i++) {
-            c = input();
-            if (c == EOF) break;
-            buffer[i] = (char)c;
-        }
-        buffer[7] = '\0';
-
-        if (strncasecmp(buffer, "COMMENT", 7) == 0) {
-            BEGIN(END_COMMENT);
-            return process_token("END COMMENT", "KW_END_COMMENT", "", KW_END);
-        } else {
-            for (int i = strlen(buffer) - 1; i >= 0; i--) unput(buffer[i]);
-        }
-    } else {
-        unput(c);
-    }
-
-    return process_token("END", "KW_END", "", KW_END);
-}
+(?i:end)([ \t]+[A-Za-z][A-Za-z0-9_]*)?   return process_token(yytext, "KW_END", "", KW_END);
 (?i:eq)           return process_token(yytext, "KW_EQ", "", KW_EQ);
 (?i:eqv)          return process_token(yytext, "KW_EQV", "", KW_EQV);
 (?i:external)     return process_token(yytext, "KW_EXTERNAL", "", KW_EXTERNAL);
@@ -126,30 +91,57 @@ uint	[0-9]+|(2|4|8|16)[Rr][0-9A-Fa-f]+
 (?i:virtual)      return process_token(yytext, "KW_VIRTUAL", "", KW_VIRTUAL);
 (?i:when)         return process_token(yytext, "KW_WHEN", "", KW_WHEN);
 (?i:while)        return process_token(yytext, "KW_WHILE", "", KW_WHILE);
+(?i:comment)[^;]*\;      ;
 
  /* multicharacter operators */
-":=" return process_token(yytext, "ASSIGN", "", ASSIGN);
-":-" return process_token(yytext, "REF_ASSIGN", "", REF_ASSIGN);
-"<=" return process_token(yytext, "KW_LT", "", KW_LT);
-">=" return process_token(yytext, "KW_GE", "", KW_GE);
-"<>" return process_token(yytext, "KW_NE", "", KW_NE);
-"==" return process_token(yytext, "KW_EQ", "", KW_EQ);
-"=/=" return process_token(yytext, "KW_EQV", "", KW_EQV);
+":="    return process_token(yytext, "ASSIGN", "", ASSIGN);
+":-"    return process_token(yytext, "REF_ASSIGN", "", REF_ASSIGN);
+"<="    return process_token(yytext, "KW_LE", "", KW_LE);
+">="    return process_token(yytext, "KW_GE", "", KW_GE);
+"<>"    return process_token(yytext, "KW_NE", "", KW_NE);
+"=="    return process_token(yytext, "KW_EQ", "", KW_EQ);
 
  /* identifiers */
- [A-Za-z][A-Za-z0-9]* return process_token(yytext, "IDENT", "", IDENT);
+ [A-Za-z][A-Za-z0-9]* return process_token(yytext, "IDENT", yytext, IDENT);
 
  /* unsigned integer constant */
-
+[0-9]+ return process_token(yytext, "INTEGER_CONST", yytext, INTEGER_CONST);
 
  /* unsigned real constant */
+ [0-9]*\.[0-9]+ return process_token(yytext, "REAL_CONST", yytext, REAL_CONST);
 
  /* direct comments */
-![^;]*;    ;
+! { 
+    comm_beg = yylineno;  
+    BEGIN(DIRECT_COMMENT);
+}
+<DIRECT_COMMENT>[^;\n]+ ; 
+<DIRECT_COMMENT>;\n? { BEGIN(INITIAL); } 
+<DIRECT_COMMENT>\n  ;  
 
  /* strings */
+ \"([^\"\n]|\"\")*\"   return process_token(yytext, "TEXT_CONST", "", TEXT_CONST);
 
  /* single character operators and punctuation */
+'[^']' return process_token(yytext, "CHARACTER_CONST", yytext, CHARACTER_CONST);
+"+"     return process_token(yytext, "+", "", '+');
+"-"     return process_token(yytext, "-", "", '-');
+"*"     return process_token(yytext, "*", "", '*');
+"/"     return process_token(yytext, "/", "", '/');
+"="     return process_token(yytext, "=", "", '=');
+"<"     return process_token(yytext, "<", "", '<');
+">"     return process_token(yytext, ">", "", '>');
+":"     return process_token(yytext, ":", "", ':');
+"'"     return process_token(yytext, "'", "", '\'');
+";"     return process_token(yytext, ";", "", ';');
+","     return process_token(yytext, ",", "", ',');
+"("     return process_token(yytext, "(", "", '(');
+")"     return process_token(yytext, ")", "", ')');
+"{"     return process_token(yytext, "{", "", '{');
+"}"     return process_token(yytext, "}", "", '}');
+"."     return process_token(yytext, ".", "", '.');
+"["     return process_token(yytext, "[", "", '[');
+"]"     return process_token(yytext, "]", "", ']');
 
 %%
 

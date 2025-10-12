@@ -3,104 +3,175 @@ yytext              Token type       Token value as string
 
 BEGIN               KW_BEGIN        
 Class               KW_CLASS        
-Glyph               IDENT           
-;Virtual             KW_VIRTUAL      
-:Procedure           KW_PROCEDURE    
-print               IDENT           
+Glyph               IDENT           Glyph
+;                   ;               
+Virtual             KW_VIRTUAL      
+:                   :               
+Procedure           KW_PROCEDURE    
+print               IDENT           print
 Is                  KW_IS           
 Procedure           KW_PROCEDURE    
-print               IDENT           
-;;Begin               KW_BEGIN        
-END                 KW_END          
-;Glyph               IDENT           
+print               IDENT           print
+;                   ;               
+;                   ;               
+Begin               KW_BEGIN        
+End                 KW_END          
+;                   ;               
+Glyph               IDENT           Glyph
 Class               KW_CLASS        
-Char                IDENT           
-(c                   IDENT           
-);comment             KW_COMMENT      
-this                KW_THIS         
-is                  KW_IS           
-an                  IDENT           
-example             IDENT           
-class               KW_CLASS        
-;Character           KW_CHARACTER    
-c                   IDENT           
-;Begin               KW_BEGIN        
+Char                IDENT           Char
+(                   (               
+c                   IDENT           c
+)                   )               
+;                   ;               
+Character           KW_CHARACTER    
+c                   IDENT           c
+;                   ;               
+Begin               KW_BEGIN        
 Procedure           KW_PROCEDURE    
-print               IDENT           
-;OutChar             IDENT           
-(c                   IDENT           
-);END                 KW_END          
-;Glyph               IDENT           
+print               IDENT           print
+;                   ;               
+OutChar             IDENT           OutChar
+(                   (               
+c                   IDENT           c
+)                   )               
+;                   ;               
+End                 KW_END          
+;                   ;               
+Glyph               IDENT           Glyph
 Class               KW_CLASS        
-Line                IDENT           
-(elements            IDENT           
-);Ref                 KW_REF          
-(Glyph               IDENT           
-)Array               KW_ARRAY        
-elements            IDENT           
-;Begin               KW_BEGIN        
+Line                IDENT           Line
+(                   (               
+elements            IDENT           elements
+)                   )               
+;                   ;               
+Ref                 KW_REF          
+(                   (               
+Glyph               IDENT           Glyph
+)                   )               
+Array               KW_ARRAY        
+elements            IDENT           elements
+;                   ;               
+Begin               KW_BEGIN        
 Procedure           KW_PROCEDURE    
-print               IDENT           
-;Begin               KW_BEGIN        
+print               IDENT           print
+;                   ;               
+Begin               KW_BEGIN        
 Integer             KW_INTEGER      
-i                   IDENT           
-;For                 KW_FOR          
-i                   IDENT           
+i                   IDENT           i
+;                   ;               
+For                 KW_FOR          
+i                   IDENT           i
 :=                  ASSIGN          
-1Step                KW_STEP         
-1Until               KW_UNTIL        
-UpperBound          IDENT           
-(elements            IDENT           
-,1)Do                  KW_DO           
-elements            IDENT           
-(i                   IDENT           
-).print               IDENT           
-;OutImage            IDENT           
-;END                 KW_END          
-print               IDENT           
-;END                 KW_END          
-;Ref                 KW_REF          
-(Glyph               IDENT           
-)rg                  IDENT           
-;Ref                 KW_REF          
-(Glyph               IDENT           
-)Array               KW_ARRAY        
-rgs                 IDENT           
-(1:4);OutText             IDENT           
-("Testing             IDENT           
-this                KW_THIS         
-""new                 KW_NEW          
-""program             IDENT           
-");REAL                KW_REAL         
-r                   IDENT           
-;r                   IDENT           
+1                   INTEGER_CONST   1
+Step                KW_STEP         
+1                   INTEGER_CONST   1
+Until               KW_UNTIL        
+UpperBound          IDENT           UpperBound
+(                   (               
+elements            IDENT           elements
+,                   ,               
+1                   INTEGER_CONST   1
+)                   )               
+Do                  KW_DO           
+elements            IDENT           elements
+(                   (               
+i                   IDENT           i
+)                   )               
+.                   .               
+print               IDENT           print
+;                   ;               
+OutImage            IDENT           OutImage
+;                   ;               
+END print           KW_END          
+;                   ;               
+End                 KW_END          
+;                   ;               
+Ref                 KW_REF          
+(                   (               
+Glyph               IDENT           Glyph
+)                   )               
+rg                  IDENT           rg
+;                   ;               
+Ref                 KW_REF          
+(                   (               
+Glyph               IDENT           Glyph
+)                   )               
+Array               KW_ARRAY        
+rgs                 IDENT           rgs
+(                   (               
+1                   INTEGER_CONST   1
+:                   :               
+4                   INTEGER_CONST   4
+)                   )               
+;                   ;               
+OutText             IDENT           OutText
+(                   (               
+"Testing this ""new"TEXT_CONST      Testing this "new" program
+)                   )               
+;                   ;               
+REAL                KW_REAL         
+r                   IDENT           r
+;                   ;               
+r                   IDENT           r
 :=                  ASSIGN          
-3.1415;rgs                 IDENT           
-(1):-                  REF_ASSIGN      
-New                 KW_NEW          
-Char                IDENT           
-('A                   IDENT           
-');rgs                 IDENT           
-(2):-                  REF_ASSIGN      
-New                 KW_NEW          
-Char                IDENT           
-('b                   IDENT           
-');rgs                 IDENT           
-(3):-                  REF_ASSIGN      
-New                 KW_NEW          
-Char                IDENT           
-('b                   IDENT           
-');rgs                 IDENT           
-(4):-                  REF_ASSIGN      
-New                 KW_NEW          
-Char                IDENT           
-('a                   IDENT           
-');rg                  IDENT           
+3.1415              REAL_CONST      3.1415
+;                   ;               
+rgs                 IDENT           rgs
+(                   (               
+1                   INTEGER_CONST   1
+)                   )               
 :-                  REF_ASSIGN      
 New                 KW_NEW          
-Line                IDENT           
-(rgs                 IDENT           
-);rg                  IDENT           
-.print               IDENT           
-;END                 KW_END          
-;
+Char                IDENT           Char
+(                   (               
+'A'                 CHARACTER_CONST 'A'
+)                   )               
+;                   ;               
+rgs                 IDENT           rgs
+(                   (               
+2                   INTEGER_CONST   2
+)                   )               
+:-                  REF_ASSIGN      
+New                 KW_NEW          
+Char                IDENT           Char
+(                   (               
+'b'                 CHARACTER_CONST 'b'
+)                   )               
+;                   ;               
+rgs                 IDENT           rgs
+(                   (               
+3                   INTEGER_CONST   3
+)                   )               
+:-                  REF_ASSIGN      
+New                 KW_NEW          
+Char                IDENT           Char
+(                   (               
+'b'                 CHARACTER_CONST 'b'
+)                   )               
+;                   ;               
+rgs                 IDENT           rgs
+(                   (               
+4                   INTEGER_CONST   4
+)                   )               
+:-                  REF_ASSIGN      
+New                 KW_NEW          
+Char                IDENT           Char
+(                   (               
+'a'                 CHARACTER_CONST 'a'
+)                   )               
+;                   ;               
+rg                  IDENT           rg
+:-                  REF_ASSIGN      
+New                 KW_NEW          
+Line                IDENT           Line
+(                   (               
+rgs                 IDENT           rgs
+)                   )               
+;                   ;               
+rg                  IDENT           rg
+.                   .               
+print               IDENT           print
+;                   ;               
+End                 KW_END          
+;                   ;               
