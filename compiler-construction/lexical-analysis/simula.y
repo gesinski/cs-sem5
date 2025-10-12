@@ -74,7 +74,7 @@ int
 main(void)
 {
 	int ret;
-	printf("Author: First and Last Name\n");
+	printf("Author: Pawel Gesinski\n");
 	printf("yytext              Token type       Token value as string\n\n");
 	ret = yyparse();
 	return ret;

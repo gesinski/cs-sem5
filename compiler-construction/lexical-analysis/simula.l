@@ -24,15 +24,120 @@ uint	[0-9]+|(2|4|8|16)[Rr][0-9A-Fa-f]+
 %%
 
  /* removal of white spaces */
+[ \t\r\n]+   ;
 
  /* detection of keywords */
-(?i:activate)   return process_token(yytext, "KW_ACTIVATE", "", KW_ACTIVATE);
- /* Note that for KW_END you should do a bit more */
+
+(?i:activate)     return process_token(yytext, "KW_ACTIVATE", "", KW_ACTIVATE);
+(?i:after)        return process_token(yytext, "KW_AFTER", "", KW_AFTER);
+(?i:and)          return process_token(yytext, "KW_AND", "", KW_AND);
+(?i:array)        return process_token(yytext, "KW_ARRAY", "", KW_ARRAY);
+(?i:at)           return process_token(yytext, "KW_AT", "", KW_AT);
+(?i:before)       return process_token(yytext, "KW_BEFORE", "", KW_BEFORE);
+(?i:begin)        return process_token(yytext, "KW_BEGIN", "", KW_BEGIN);
+(?i:boolean)      return process_token(yytext, "KW_BOOLEAN", "", KW_BOOLEAN);
+(?i:character)    return process_token(yytext, "KW_CHARACTER", "", KW_CHARACTER);
+(?i:class)        return process_token(yytext, "KW_CLASS", "", KW_CLASS);
+(?i:comment)      return process_token(yytext, "KW_COMMENT", "", KW_COMMENT);
+(?i:delay)        return process_token(yytext, "KW_DELAY", "", KW_DELAY);
+(?i:do)           return process_token(yytext, "KW_DO", "", KW_DO);
+(?i:else)         return process_token(yytext, "KW_ELSE", "", KW_ELSE);
+(?i:end)  {
+    comm_beg = yylineno;
+
+    char *p = yytext;
+    int c = input();
+
+    while (c == ' ' || c == '\t' || c == '\n') {
+        c = input();
+    }
+
+    if (c == EOF) {
+        return process_token("END", "KW_END", "", KW_END);
+    }
+
+    if (c == 'C' || c == 'c') {
+        char buffer[10];
+        buffer[0] = (char)c;
+        for (int i = 1; i < 7; i++) {
+            c = input();
+            if (c == EOF) break;
+            buffer[i] = (char)c;
+        }
+        buffer[7] = '\0';
+
+        if (strncasecmp(buffer, "COMMENT", 7) == 0) {
+            BEGIN(END_COMMENT);
+            return process_token("END COMMENT", "KW_END_COMMENT", "", KW_END);
+        } else {
+            for (int i = strlen(buffer) - 1; i >= 0; i--) unput(buffer[i]);
+        }
+    } else {
+        unput(c);
+    }
+
+    return process_token("END", "KW_END", "", KW_END);
+}
+(?i:eq)           return process_token(yytext, "KW_EQ", "", KW_EQ);
+(?i:eqv)          return process_token(yytext, "KW_EQV", "", KW_EQV);
+(?i:external)     return process_token(yytext, "KW_EXTERNAL", "", KW_EXTERNAL);
+(?i:false)        return process_token(yytext, "KW_FALSE", "", KW_FALSE);
+(?i:for)          return process_token(yytext, "KW_FOR", "", KW_FOR);
+(?i:ge)           return process_token(yytext, "KW_GE", "", KW_GE);
+(?i:go)           return process_token(yytext, "KW_GO", "", KW_GO);
+(?i:goto)         return process_token(yytext, "KW_GOTO", "", KW_GOTO);
+(?i:gt)           return process_token(yytext, "KW_GT", "", KW_GT);
+(?i:hidden)       return process_token(yytext, "KW_HIDDEN", "", KW_HIDDEN);
+(?i:if)           return process_token(yytext, "KW_IF", "", KW_IF);
+(?i:imp)          return process_token(yytext, "KW_IMP", "", KW_IMP);
+(?i:in)           return process_token(yytext, "KW_IN", "", KW_IN);
+(?i:inner)        return process_token(yytext, "KW_INNER", "", KW_INNER);
+(?i:inspect)      return process_token(yytext, "KW_INSPECT", "", KW_INSPECT);
+(?i:integer)      return process_token(yytext, "KW_INTEGER", "", KW_INTEGER);
+(?i:is)           return process_token(yytext, "KW_IS", "", KW_IS);
+(?i:label)        return process_token(yytext, "KW_LABEL", "", KW_LABEL);
+(?i:long)         return process_token(yytext, "KW_LONG", "", KW_LONG);
+(?i:lt)           return process_token(yytext, "KW_LT", "", KW_LT);
+(?i:name)         return process_token(yytext, "KW_NAME", "", KW_NAME);
+(?i:ne)           return process_token(yytext, "KW_NE", "", KW_NE);
+(?i:new)          return process_token(yytext, "KW_NEW", "", KW_NEW);
+(?i:none)         return process_token(yytext, "KW_NONE", "", KW_NONE);
+(?i:not)          return process_token(yytext, "KW_NOT", "", KW_NOT);
+(?i:notext)       return process_token(yytext, "KW_NOTEXT", "", KW_NOTEXT);
+(?i:or)           return process_token(yytext, "KW_OR", "", KW_OR);
+(?i:otherwise)    return process_token(yytext, "KW_OTHERWISE", "", KW_OTHERWISE);
+(?i:prior)        return process_token(yytext, "KW_PRIOR", "", KW_PRIOR);
+(?i:procedure)    return process_token(yytext, "KW_PROCEDURE", "", KW_PROCEDURE);
+(?i:protected)    return process_token(yytext, "KW_PROTECTED", "", KW_PROTECTED);
+(?i:qua)          return process_token(yytext, "KW_QUA", "", KW_QUA);
+(?i:reactivate)   return process_token(yytext, "KW_REACTIVATE", "", KW_REACTIVATE);
+(?i:real)         return process_token(yytext, "KW_REAL", "", KW_REAL);
+(?i:ref)          return process_token(yytext, "KW_REF", "", KW_REF);
+(?i:short)        return process_token(yytext, "KW_SHORT", "", KW_SHORT);
+(?i:step)         return process_token(yytext, "KW_STEP", "", KW_STEP);
+(?i:switch)       return process_token(yytext, "KW_SWITCH", "", KW_SWITCH);
+(?i:text)         return process_token(yytext, "KW_TEXT", "", KW_TEXT);
+(?i:then)         return process_token(yytext, "KW_THEN", "", KW_THEN);
+(?i:this)         return process_token(yytext, "KW_THIS", "", KW_THIS);
+(?i:to)           return process_token(yytext, "KW_TO", "", KW_TO);
+(?i:true)         return process_token(yytext, "KW_TRUE", "", KW_TRUE);
+(?i:until)        return process_token(yytext, "KW_UNTIL", "", KW_UNTIL);
+(?i:value)        return process_token(yytext, "KW_VALUE", "", KW_VALUE);
+(?i:virtual)      return process_token(yytext, "KW_VIRTUAL", "", KW_VIRTUAL);
+(?i:when)         return process_token(yytext, "KW_WHEN", "", KW_WHEN);
+(?i:while)        return process_token(yytext, "KW_WHILE", "", KW_WHILE);
 
  /* multicharacter operators */
 ":=" return process_token(yytext, "ASSIGN", "", ASSIGN);
+":-" return process_token(yytext, "REF_ASSIGN", "", REF_ASSIGN);
+"<=" return process_token(yytext, "KW_LT", "", KW_LT);
+">=" return process_token(yytext, "KW_GE", "", KW_GE);
+"<>" return process_token(yytext, "KW_NE", "", KW_NE);
+"==" return process_token(yytext, "KW_EQ", "", KW_EQ);
+"=/=" return process_token(yytext, "KW_EQV", "", KW_EQV);
 
  /* identifiers */
+ [A-Za-z][A-Za-z0-9]* return process_token(yytext, "IDENT", "", IDENT);
 
  /* unsigned integer constant */
 
@@ -40,6 +145,7 @@ uint	[0-9]+|(2|4|8|16)[Rr][0-9A-Fa-f]+
  /* unsigned real constant */
 
  /* direct comments */
+![^;]*;    ;
 
  /* strings */
 

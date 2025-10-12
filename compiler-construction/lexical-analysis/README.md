@@ -29,13 +29,13 @@ with the appropriate parameters.
 
 Complete the provided code in the following order:
 
-A. Print your name and surname (in the Bison file)  
-B. Detect keywords defined using the %token directive in the Bison source file (names starting with KW_, except KW_COMMENT)  
-C. Remove whitespace  
-D. Remove inline comments (starting with !, ending with ;)  
-E. Remove end-line comments (starting with the keyword end and ending with a semicolon ; on the same line; the semicolon is not part of the comment) - worth 2 points  
-F. Detect multi-character operators (<=, :=, etc.) found in the test programs  
-G. Detect identifiers  
+A. Print your name and surname (in the Bison file) ✓
+B. Detect keywords defined using the %token directive in the Bison source file (names starting with KW_, except KW_COMMENT)  ✓
+C. Remove whitespace  ✓
+D. Remove inline comments (starting with !, ending with ;)  ✓
+E. Remove end-line comments (starting with the keyword end and ending with a semicolon ; on the same line; the semicolon is not part of the comment) - worth 2 points  ✓
+F. Detect multi-character operators (<=, :=, etc.) found in the test programs  ✓
+G. Detect identifiers ✓ 
 H. Detect unsigned integers (ignore different bases, only normal integers)  
 I. Detect floating-point numbers (same rule as above)  
 J. Detect string constants (without using start conditions; ignore double quotes inside strings, include this rule as a comment)  
