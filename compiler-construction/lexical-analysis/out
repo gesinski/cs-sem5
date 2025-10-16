@@ -83,7 +83,7 @@ print               IDENT           print
 ;                   ;               
 OutImage            IDENT           OutImage
 ;                   ;               
-END print           KW_END          
+END                 KW_END          
 ;                   ;               
 End                 KW_END          
 ;                   ;               

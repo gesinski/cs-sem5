@@ -42,7 +42,17 @@ uint	[0-9]+|(2|4|8|16)[Rr][0-9A-Fa-f]+
 (?i:delay)        return process_token(yytext, "KW_DELAY", "", KW_DELAY);
 (?i:do)           return process_token(yytext, "KW_DO", "", KW_DO);
 (?i:else)         return process_token(yytext, "KW_ELSE", "", KW_ELSE);
-(?i:end)([ \t]+[A-Za-z][A-Za-z0-9_]*)?   return process_token(yytext, "KW_END", "", KW_END);
+(?i:end) {
+    comm_beg = yylineno;              
+    process_token(yytext, "KW_END", "", KW_END);
+    BEGIN(END_COMMENT);                
+}
+<END_COMMENT>[^;\n]* ;
+<END_COMMENT>\; {
+    BEGIN(INITIAL);
+    return process_token(";", ";", "", ';');
+}
+<END_COMMENT>\n {yywrap(); BEGIN(INITIAL); }
 (?i:eq)           return process_token(yytext, "KW_EQ", "", KW_EQ);
 (?i:eqv)          return process_token(yytext, "KW_EQV", "", KW_EQV);
 (?i:external)     return process_token(yytext, "KW_EXTERNAL", "", KW_EXTERNAL);
@@ -117,7 +127,7 @@ uint	[0-9]+|(2|4|8|16)[Rr][0-9A-Fa-f]+
 }
 <DIRECT_COMMENT>[^;\n]+ ; 
 <DIRECT_COMMENT>;\n? { BEGIN(INITIAL); } 
-<DIRECT_COMMENT>\n  ;  
+<DIRECT_COMMENT>\n  {yywrap(); BEGIN(INITIAL); }  
 
  /* strings */
  \"([^\"\n]|\"\")*\"   return process_token(yytext, "TEXT_CONST", "", TEXT_CONST);
