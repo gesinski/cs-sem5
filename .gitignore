@@ -1,2 +1,6 @@
 #IDE file
 .vscode
+
+#output files
+*.o
+*.out
