@@ -36,6 +36,7 @@ private:
         } else {
             generate_records(records_out); 
             mvprintw(6, 0, "File '%s' generated successfully.", file_name.c_str());
+            records_out.close();
         }
 
         refresh();
@@ -56,13 +57,13 @@ private:
 
             std::string name;
             int row = 1;
-            while (true) {
+            while(true) {
                 char buffer[256];
                 mvprintw(row, 0, "> ");
                 getnstr(buffer, 255);  
                 name = buffer;
 
-                if (name == "q" || name == "Q") 
+                if(name == "q" || name == "Q") 
                     break;
 
                 records_out << name << '\n';  
