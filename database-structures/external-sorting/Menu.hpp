@@ -1,8 +1,8 @@
 #include <ncurses.h>
-#include <string>
 #include <vector>
 #include <fstream>
 #include "generator.hpp"
+#include "ExternalSorter.hpp"
 
 class Menu {
 private:
@@ -28,27 +28,29 @@ private:
     }
 
     void option_generate_records() {
-        const std::string file_name = "generated_records";
-        std::ofstream records_out(file_name);
+        const std::string FILE_NAME = "generated_records";
+        std::ofstream records_out(FILE_NAME);
 
         if(!records_out) {
-            mvprintw(6, 0, "Cannot open %s for writing", file_name.c_str());
+            mvprintw(6, 0, "Cannot open %s for writing", FILE_NAME.c_str());
         } else {
             generate_records(records_out); 
-            mvprintw(6, 0, "File '%s' generated successfully.", file_name.c_str());
+            mvprintw(6, 0, "File '%s' generated successfully. Press any key to continue...", FILE_NAME.c_str());
             records_out.close();
         }
 
         refresh();
         getch();
+
+        ExternalSorter sorter(FILE_NAME);
     }
 
     void option_enter_records() {
-        const std::string file_name = "input_records";
-        std::ofstream records_out(file_name);
+        const std::string FILE_NAME = "input_records";
+        std::ofstream records_out(FILE_NAME);
 
         if(!records_out) {
-            mvprintw(6, 0, "Cannot open %s for writing", file_name.c_str());
+            mvprintw(6, 0, "Cannot open %s for writing", FILE_NAME.c_str());
         } else {
             echo();
             curs_set(1);
@@ -69,13 +71,17 @@ private:
                 records_out << name << '\n';  
                 row++;
             }
+            records_out.close();
+
             noecho();
             curs_set(0);
             clear();
-            mvprintw(0, 0, "Names saved to %s.", file_name.c_str());
+            mvprintw(0, 0, "Names saved to %s.", FILE_NAME.c_str());
             mvprintw(2, 0, "Press any key to continue...");
             refresh();
             getch();
+
+            ExternalSorter sorter(FILE_NAME);
         }
     }
 
@@ -84,16 +90,26 @@ private:
         curs_set(1);
         clear();
         mvprintw(0, 0, "Enter filename: ");
-        char file_name[256];
-        getnstr(file_name, 255);  
-        noecho();
-        curs_set(0);
+        char FILE_NAME[256];
+        getnstr(FILE_NAME, 255);  
 
-        // clear();
-        // mvprintw(0, 0, "You entered file: %s", filename);
-        // mvprintw(2, 0, "Press any key to return to menu...");
-        // refresh();
-        // getch();
+        std::ifstream records(FILE_NAME);
+
+        if(!records) {
+            mvprintw(0, 0, "Cannot open %s for writing", FILE_NAME);
+        } else {
+            noecho();
+            curs_set(0);
+            clear();
+            mvprintw(0, 0, "You entered file: %s", FILE_NAME);
+            mvprintw(2, 0, "Press any key to continue...");
+            refresh();
+            getch();
+            records.close();
+
+            ExternalSorter sorter(FILE_NAME);
+            sorter.sort();
+        }
     }
 
 public:
