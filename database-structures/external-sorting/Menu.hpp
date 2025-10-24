@@ -27,6 +27,18 @@ private:
         refresh();
     }
 
+    void input_mode() {
+        echo();
+        curs_set(1);
+        clear();
+    }
+
+    void output_mode() {
+        noecho();
+        curs_set(0);
+        clear();
+    }
+
     void option_generate_records() {
         const std::string FILE_NAME = "generated_records";
         std::ofstream records_out(FILE_NAME);
@@ -34,9 +46,7 @@ private:
         if(!records_out) {
             mvprintw(6, 0, "Cannot open %s for writing", FILE_NAME.c_str());
         } else {
-            echo();
-            curs_set(1);
-            clear();
+            input_mode();
             mvprintw(0, 0, "Enter how many records generate: ");
             mvprintw(1, 0, "> ");
             char buffer[16];
@@ -44,10 +54,7 @@ private:
 
             generate_records(records_out, std::stoi(buffer)); 
 
-            noecho();
-            curs_set(0);
-            clear();
-
+            output_mode();
             mvprintw(0, 0, "File '%s' generated successfully. Press any key to continue...", FILE_NAME.c_str());
             records_out.close();
         }
@@ -65,9 +72,7 @@ private:
         if(!records_out) {
             mvprintw(6, 0, "Cannot open %s for writing", FILE_NAME.c_str());
         } else {
-            echo();
-            curs_set(1);
-            clear();
+            input_mode();
             mvprintw(0, 0, "Enter names (write q to STOP):\n");
 
             std::string name;
@@ -86,9 +91,8 @@ private:
             }
             records_out.close();
 
-            noecho();
-            curs_set(0);
-            clear();
+            output_mode();
+
             mvprintw(0, 0, "Names saved to %s.", FILE_NAME.c_str());
             mvprintw(2, 0, "Press any key to continue...");
             refresh();
@@ -99,9 +103,7 @@ private:
     }
 
     void option_file_records() {
-        echo();
-        curs_set(1);
-        clear();
+        input_mode();
         mvprintw(0, 0, "Enter filename: ");
         char FILE_NAME[256];
         getnstr(FILE_NAME, 255);  
@@ -111,9 +113,7 @@ private:
         if(!records) {
             mvprintw(0, 0, "Cannot open %s for writing", FILE_NAME);
         } else {
-            noecho();
-            curs_set(0);
-            clear();
+            output_mode();
             mvprintw(0, 0, "You entered file: %s", FILE_NAME);
             mvprintw(2, 0, "Press any key to continue...");
             refresh();
@@ -128,10 +128,9 @@ private:
 public:
     Menu() {
         initscr();
-        noecho();
+        output_mode();
         cbreak();
         keypad(stdscr, TRUE);
-        curs_set(0);
 
         int button;
         Option current_option = OPTION_1;
