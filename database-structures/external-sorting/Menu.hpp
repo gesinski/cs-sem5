@@ -53,16 +53,18 @@ private:
             getnstr(buffer, 15);
 
             generate_records(records_out, std::stoi(buffer)); 
-
-            output_mode();
-            mvprintw(0, 0, "File '%s' generated successfully. Press any key to continue...", FILE_NAME.c_str());
+            
             records_out.close();
+            output_mode();
+            
+            mvprintw(0, 0, "File '%s' generated successfully. Press any key to continue...", FILE_NAME.c_str());
+            
+            refresh();
+            getch();
+
+            ExternalSorter sorter(FILE_NAME);
+            sorter.sort();
         }
-
-        refresh();
-        getch();
-
-        ExternalSorter sorter(FILE_NAME);
     }
 
     void option_enter_records() {
@@ -90,15 +92,16 @@ private:
                 row++;
             }
             records_out.close();
-
             output_mode();
 
             mvprintw(0, 0, "Names saved to %s.", FILE_NAME.c_str());
             mvprintw(2, 0, "Press any key to continue...");
+
             refresh();
             getch();
 
             ExternalSorter sorter(FILE_NAME);
+            sorter.sort();
         }
     }
 
@@ -113,12 +116,14 @@ private:
         if(!records) {
             mvprintw(0, 0, "Cannot open %s for writing", FILE_NAME);
         } else {
+            records.close();
             output_mode();
+
             mvprintw(0, 0, "You entered file: %s", FILE_NAME);
             mvprintw(2, 0, "Press any key to continue...");
+
             refresh();
             getch();
-            records.close();
 
             ExternalSorter sorter(FILE_NAME);
             sorter.sort();
