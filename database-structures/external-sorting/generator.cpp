@@ -22,7 +22,7 @@ std::vector<std::string> load_file(const std::string& filename) {
     return lines;
 }
 
-void generate_records(std::ofstream &records) {
+void generate_records(std::ofstream &records, int records_num) {
     auto first_names = load_file("first_names.txt");
     auto last_names  = load_file("last_names.txt");
 
@@ -36,7 +36,7 @@ void generate_records(std::ofstream &records) {
     std::uniform_int_distribution<size_t> dist_first(0, first_names.size() - 1);
     std::uniform_int_distribution<size_t> dist_last(0, last_names.size() - 1);
 
-    for(int i = 0; i < 1000; ++i) {
+    for(int i = 0; i < records_num; ++i) {
         const std::string& first = first_names[dist_first(gen)];
         const std::string& last  = last_names[dist_last(gen)];
         records << last << " " << first << "\n";

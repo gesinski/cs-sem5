@@ -34,8 +34,21 @@ private:
         if(!records_out) {
             mvprintw(6, 0, "Cannot open %s for writing", FILE_NAME.c_str());
         } else {
-            generate_records(records_out); 
-            mvprintw(6, 0, "File '%s' generated successfully. Press any key to continue...", FILE_NAME.c_str());
+            echo();
+            curs_set(1);
+            clear();
+            mvprintw(0, 0, "Enter how many records generate: ");
+            mvprintw(1, 0, "> ");
+            char buffer[16];
+            getnstr(buffer, 15);
+
+            generate_records(records_out, std::stoi(buffer)); 
+
+            noecho();
+            curs_set(0);
+            clear();
+
+            mvprintw(0, 0, "File '%s' generated successfully. Press any key to continue...", FILE_NAME.c_str());
             records_out.close();
         }
 
