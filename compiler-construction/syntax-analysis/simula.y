@@ -302,6 +302,13 @@ GRAMMAR: %empty { yyerror("File is ampty"); YYERROR; }
 
 /* PROCEDURE_HEADING */
 /* Identifier followed by procedure parts (PROCEDURE_PARTS) */
+PROCEDURE_HEADING:
+         IDENT PROCEDURE_PARTS
+         {
+            found("PROCEDURE_HEADING", $1);
+            strcpy($$, $1);
+         }
+;
 
 /* PROCEDURE_PARTS */
 /* Formal parameter part (FORMAL_PARAMETER_PART), followed by optional

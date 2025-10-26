@@ -1,0 +1,166 @@
+Author: Paweł Gęsiński
+yytext              Token type      Token value as string
+
+Begin               KW_BEGIN        
+Syntax error syntax error
+Class               KW_CLASS        
+Glyph               IDENT           Glyph
+;                   ;               
+Virtual             KW_VIRTUAL      
+:                   :               
+Procedure           KW_PROCEDURE    
+print               IDENT           print
+Is                  KW_IS           
+Procedure           KW_PROCEDURE    
+print               IDENT           print
+;                   ;               
+;                   ;               
+Begin               KW_BEGIN        
+End                 KW_END          
+;                   ;               
+Glyph               IDENT           Glyph
+Class               KW_CLASS        
+Char                IDENT           Char
+(                   (               
+c                   IDENT           c
+)                   )               
+;                   ;               
+Character           KW_CHARACTER    
+c                   IDENT           c
+;                   ;               
+Begin               KW_BEGIN        
+Procedure           KW_PROCEDURE    
+print               IDENT           print
+;                   ;               
+OutChar             IDENT           OutChar
+(                   (               
+c                   IDENT           c
+)                   )               
+;                   ;               
+End                 KW_END          
+;                   ;               
+Glyph               IDENT           Glyph
+Class               KW_CLASS        
+Line                IDENT           Line
+(                   (               
+elements            IDENT           elements
+)                   )               
+;                   ;               
+Ref                 KW_REF          
+(                   (               
+Glyph               IDENT           Glyph
+)                   )               
+Array               KW_ARRAY        
+elements            IDENT           elements
+;                   ;               
+Begin               KW_BEGIN        
+Procedure           KW_PROCEDURE    
+print               IDENT           print
+;                   ;               
+Begin               KW_BEGIN        
+Integer             KW_INTEGER      
+i                   IDENT           i
+;                   ;               
+For                 KW_FOR          
+i                   IDENT           i
+:=                  ASSIGN          
+1                   INTEGER_CONST   1
+Step                KW_STEP         
+1                   INTEGER_CONST   1
+Until               KW_UNTIL        
+UpperBound          IDENT           UpperBound
+(                   (               
+elements            IDENT           elements
+,                   ,               
+1                   INTEGER_CONST   1
+)                   )               
+Do                  KW_DO           
+elements            IDENT           elements
+(                   (               
+i                   IDENT           i
+)                   )               
+.                   .               
+print               IDENT           print
+;                   ;               
+OutImage            IDENT           OutImage
+;                   ;               
+End                 KW_END          
+;                   ;               
+End                 KW_END          
+;                   ;               
+Ref                 KW_REF          
+(                   (               
+Glyph               IDENT           Glyph
+)                   )               
+rg                  IDENT           rg
+;                   ;               
+Ref                 KW_REF          
+(                   (               
+Glyph               IDENT           Glyph
+)                   )               
+Array               KW_ARRAY        
+rgs                 IDENT           rgs
+(                   (               
+1                   INTEGER_CONST   1
+:                   :               
+4                   INTEGER_CONST   4
+)                   )               
+;                   ;               
+rgs                 IDENT           rgs
+(                   (               
+1                   INTEGER_CONST   1
+)                   )               
+:-                  REF_ASSIGN      
+New                 KW_NEW          
+Char                IDENT           Char
+(                   (               
+'A'                 CHARACTER_CONST 'A'
+)                   )               
+;                   ;               
+rgs                 IDENT           rgs
+(                   (               
+2                   INTEGER_CONST   2
+)                   )               
+:-                  REF_ASSIGN      
+New                 KW_NEW          
+Char                IDENT           Char
+(                   (               
+'b'                 CHARACTER_CONST 'b'
+)                   )               
+;                   ;               
+rgs                 IDENT           rgs
+(                   (               
+3                   INTEGER_CONST   3
+)                   )               
+:-                  REF_ASSIGN      
+New                 KW_NEW          
+Char                IDENT           Char
+(                   (               
+'b'                 CHARACTER_CONST 'b'
+)                   )               
+;                   ;               
+rgs                 IDENT           rgs
+(                   (               
+4                   INTEGER_CONST   4
+)                   )               
+:-                  REF_ASSIGN      
+New                 KW_NEW          
+Char                IDENT           Char
+(                   (               
+'a'                 CHARACTER_CONST 'a'
+)                   )               
+;                   ;               
+rg                  IDENT           rg
+:-                  REF_ASSIGN      
+New                 KW_NEW          
+Line                IDENT           Line
+(                   (               
+rgs                 IDENT           rgs
+)                   )               
+;                   ;               
+rg                  IDENT           rg
+.                   .               
+print               IDENT           print
+;                   ;               
+End                 KW_END          
+;                   ;               
