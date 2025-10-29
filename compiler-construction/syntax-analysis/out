@@ -1,11 +1,11 @@
-Author: Paweł Gęsiński
+Author: first nad last name
 yytext              Token type      Token value as string
 
 Begin               KW_BEGIN        
-Syntax error syntax error
 Class               KW_CLASS        
 Glyph               IDENT           Glyph
 ;                   ;               
+======== FOUND: empty FVS_PART  ========
 Virtual             KW_VIRTUAL      
 :                   :               
 Procedure           KW_PROCEDURE    
@@ -14,12 +14,22 @@ Is                  KW_IS
 Procedure           KW_PROCEDURE    
 print               IDENT           print
 ;                   ;               
+======== FOUND: PROCEDURE_HEADING 'print' ========
+======== FOUND: PROCEDURE_DECLARATION 'print' ========
 ;                   ;               
+======== FOUND: VIRTUAL_PART  ========
 Begin               KW_BEGIN        
 End                 KW_END          
+======== FOUND: STATEMENT  ========
+======== FOUND: CLASS_BODY  ========
+======== FOUND: MAIN_PART 'Glyph' ========
+======== FOUND: CLASS_DECLARATION 'Glyph' ========
 ;                   ;               
+======== FOUND: DECLARATION  ========
 Glyph               IDENT           Glyph
 Class               KW_CLASS        
+======== FOUND: STATEMENT  ========
+Syntax error syntax error
 Char                IDENT           Char
 (                   (               
 c                   IDENT           c
