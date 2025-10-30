@@ -15,7 +15,7 @@ void found( const char *nonterminal, const char *value );
         double d; /* floating point field */
 }
 
-%debug
+/* %debug */
 
 %token<i> KW_ACTIVATE KW_AFTER KW_AND KW_ARRAY KW_AT KW_BEFORE KW_BEGIN
 %token<i> KW_BOOLEAN KW_CHARACTER KW_CLASS KW_COMMENT KW_DELAY KW_DO
@@ -69,6 +69,7 @@ BLOCK_HEAD:
 
 DECLARATIONS:
       %empty 
+    | DECLARATION
     | DECLARATION ';' DECLARATIONS 
 ;
 
@@ -143,7 +144,7 @@ OPT_VIRTUAL_PART:
 
 /* VIRTUAL_PART */
 VIRTUAL_PART:
-      KW_VIRTUAL ':' VIRTUAL_SPEC ';'
+      KW_VIRTUAL ':' VIRTUAL_SPEC
 ;
 
 /* VIRTUAL_SPEC */
@@ -219,7 +220,7 @@ OPT_KW_SHORT:
 
 /* REAL_TYPE */
 REAL_TYPE:
-      OPT_KW_SHORT KW_REAL
+      OPT_KW_LONG KW_REAL
 ;
 
 /* OPT_KW_LONG */
@@ -244,12 +245,12 @@ CLASS_BODY:
 
 /* COMPOUND_STATEMENT */
 COMPOUND_STATEMENT:
-      KW_BEGIN COMPOUND_TAIL
+      BLOCK
 ;
 
 /* COMPOUND_TAIL */
 COMPOUND_TAIL:
-      STATEMENTS KW_END
+      DECLARATIONS STATEMENTS KW_END
       {
          found("BLOCK", "");
       }
@@ -392,7 +393,6 @@ REFERENCE_LEFT_PART:
 /*  REFERENCE_RIGHT_PART */
 REFERENCE_RIGHT_PART:
       REFERENCE_EXPRESSION
-    | REFERENCE_ASSIGNMENT
 ;
 
 /* REFERENCE_EXPRESSION */
@@ -410,12 +410,14 @@ OBJECT_EXPRESSION:
  SIMPLE_OBJECT_EXPRESSION:
       KW_NONE
     | OBJECT_GENERATOR
-    | '(' OBJECT_EXPRESSION ')'
 ;
 
 /* REFERENCE_TYPE */
 REFERENCE_TYPE:
       OBJECT_REFERENCE_TYPE
+      {
+         found("REFERENCE_TYPE", "");
+      }
     | KW_TEXT
 ;
 
@@ -432,20 +434,18 @@ QUALIFICATION:
 /* PROCEDURE_STATEMENT_1 */
 PROCEDURE_STATEMENT_1:
       PROCEDURE_STATEMENT
-    | REMOTE_PREFIX
+    | PROCEDURE_STATEMENT '.' REMOTE_PREFIX
 ;
 
 /* REMOTE_PREFIX */
 REMOTE_PREFIX:
       PREFIX
       {
-         found("REMOTE_PREFIX", $1);
-         strcpy($$, $1);
+         found("REMOTE_PREFIX", $$);
       }
-    | PREFIX '.' REMOTE_PREFIX
+    | REMOTE_PREFIX '.' PREFIX
       {
-         found("REMOTE_PREFIX", "");
-         snprintf($$, MAX_STR_LEN, "%s.%s", $1, $3);
+         found("REMOTE_PREFIX", $$);
       }
 ;
 
@@ -455,9 +455,6 @@ PREFIX:
          strcpy($$, $1);
       }
     | PROCEDURE_STATEMENT
-      {
-         strcpy($$, $1);
-      }
 ;
 
 /* PROCEDURE_STATEMENT */
@@ -502,12 +499,12 @@ EXPRESSION:
 /* IDENTIFIER_1 */
 IDENTIFIER_1:
       IDENT {strcpy($$, $1);}
-    | REMOTE_PREFIX '.' IDENTIFIER_1 {strcpy($$, $3);}
+    | REMOTE_PREFIX '.' IDENT {strcpy($$, $3);}
 ;
 
 /* PROCEDURE_DECLARATION */
 PROCEDURE_DECLARATION:
-      OPT_TYPE KW_PROCEDURE PROCEDURE_HEADING PROCEDURE_BODY
+      OPT_TYPE KW_PROCEDURE PROCEDURE_HEADING ';' PROCEDURE_BODY 
       {
          found("PROCEDURE_DECLARATION", $3);
       }
@@ -531,7 +528,7 @@ PROCEDURE_HEADING:
 
 /* PROCEDURE_PARTS */
 PROCEDURE_PARTS:
-      %empty   
+      %empty  
     | FORMAL_PARAMETER_PART OPT_MODE_PART SPECIFICATION_PART
 ;
 
@@ -586,12 +583,15 @@ VALUE_OR_TEXT_EXPRESSION:
 /* FOR_STATEMENT */
 FOR_STATEMENT:
       KW_FOR IDENT FOR_RIGHT_PART KW_DO STATEMENT
+      {
+         found("FOR_STATEMENT", $2);
+      }
 ;
 
 /* FOR_RIGHT_PART */
 FOR_RIGHT_PART:
-      VALUE_FOR_LIST_ELEMENTS
-    | REFERENCE_FOR_LIST_ELEMENTS
+      ASSIGN VALUE_FOR_LIST_ELEMENTS
+    | REF_ASSIGN REFERENCE_FOR_LIST_ELEMENTS
 ;
 
 /* VALUE_FOR_LIST_ELEMENTS */
@@ -624,8 +624,7 @@ OPT_WHILE:
 
 /* ARRAY_DECLARATION */
 ARRAY_DECLARATION:
-      OPT_TYPE
-    | KW_ARRAY ARRAY_SEGMENTS
+      OPT_TYPE KW_ARRAY ARRAY_SEGMENTS
 ;
 
 /* ARRAY_SEGMENTS */
@@ -656,8 +655,8 @@ BOUND_PAIR:
 int main( void )
 {
 	int ret;
-	yydebug = 1;
-	printf( "Author: first nad last name\n" );
+	/* yydebug = 1; */
+	printf( "Author: Paweł Gęsiński\n" );
 	printf( "yytext              Token type      Token value as string\n\n" );
 	ret = yyparse();
 	return ret;

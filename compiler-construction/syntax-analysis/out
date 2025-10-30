@@ -1,4 +1,4 @@
-Author: first nad last name
+Author: Paweł Gęsiński
 yytext              Token type      Token value as string
 
 Begin               KW_BEGIN        
@@ -15,12 +15,12 @@ Procedure           KW_PROCEDURE
 print               IDENT           print
 ;                   ;               
 ======== FOUND: PROCEDURE_HEADING 'print' ========
-======== FOUND: PROCEDURE_DECLARATION 'print' ========
 ;                   ;               
+======== FOUND: PROCEDURE_DECLARATION 'print' ========
 ======== FOUND: VIRTUAL_PART  ========
 Begin               KW_BEGIN        
 End                 KW_END          
-======== FOUND: STATEMENT  ========
+======== FOUND: BLOCK  ========
 ======== FOUND: CLASS_BODY  ========
 ======== FOUND: MAIN_PART 'Glyph' ========
 ======== FOUND: CLASS_DECLARATION 'Glyph' ========
@@ -46,14 +46,19 @@ Procedure           KW_PROCEDURE
 print               IDENT           print
 ;                   ;               
 ======== FOUND: PROCEDURE_HEADING 'print' ========
-======== FOUND: PROCEDURE_DECLARATION 'print' ========
 OutChar             IDENT           OutChar
 (                   (               
-Syntax error syntax error
 c                   IDENT           c
 )                   )               
+======== FOUND: PROCEDURE_STATEMENT 'OutChar' ========
 ;                   ;               
 End                 KW_END          
+======== FOUND: STATEMENT  ========
+======== FOUND: PROCEDURE_DECLARATION 'print' ========
+======== FOUND: BLOCK  ========
+======== FOUND: CLASS_BODY  ========
+======== FOUND: MAIN_PART 'Char' ========
+======== FOUND: CLASS_DECLARATION 'Char' ========
 ;                   ;               
 Glyph               IDENT           Glyph
 Class               KW_CLASS        
@@ -61,20 +66,28 @@ Line                IDENT           Line
 (                   (               
 elements            IDENT           elements
 )                   )               
+======== FOUND: FORMAL_PARAMETER_PART  ========
 ;                   ;               
 Ref                 KW_REF          
 (                   (               
 Glyph               IDENT           Glyph
 )                   )               
+======== FOUND: REFERENCE_TYPE  ========
 Array               KW_ARRAY        
+======== FOUND: SPECIFIER  ========
 elements            IDENT           elements
 ;                   ;               
+======== FOUND: SPECIFICATION_PART  ========
+======== FOUND: FVS_PART  ========
 Begin               KW_BEGIN        
+======== FOUND: empty VIRTUAL_PART  ========
 Procedure           KW_PROCEDURE    
 print               IDENT           print
 ;                   ;               
+======== FOUND: PROCEDURE_HEADING 'print' ========
 Begin               KW_BEGIN        
 Integer             KW_INTEGER      
+======== FOUND: VALUE_TYPE  ========
 i                   IDENT           i
 ;                   ;               
 For                 KW_FOR          
@@ -95,25 +108,39 @@ elements            IDENT           elements
 (                   (               
 i                   IDENT           i
 )                   )               
+======== FOUND: PROCEDURE_STATEMENT 'elements' ========
 .                   .               
 print               IDENT           print
 ;                   ;               
+======== FOUND: REMOTE_PREFIX 'print' ========
+======== FOUND: FOR_STATEMENT 'i' ========
 OutImage            IDENT           OutImage
 ;                   ;               
 End                 KW_END          
+======== FOUND: STATEMENT  ========
+======== FOUND: STATEMENT  ========
+======== FOUND: BLOCK  ========
 ;                   ;               
 End                 KW_END          
+======== FOUND: STATEMENT  ========
+======== FOUND: PROCEDURE_DECLARATION 'print' ========
+======== FOUND: BLOCK  ========
+======== FOUND: CLASS_BODY  ========
+======== FOUND: MAIN_PART 'Line' ========
+======== FOUND: CLASS_DECLARATION 'Line' ========
 ;                   ;               
 Ref                 KW_REF          
 (                   (               
 Glyph               IDENT           Glyph
 )                   )               
+======== FOUND: REFERENCE_TYPE  ========
 rg                  IDENT           rg
 ;                   ;               
 Ref                 KW_REF          
 (                   (               
 Glyph               IDENT           Glyph
 )                   )               
+======== FOUND: REFERENCE_TYPE  ========
 Array               KW_ARRAY        
 rgs                 IDENT           rgs
 (                   (               
@@ -124,6 +151,7 @@ rgs                 IDENT           rgs
 ;                   ;               
 rgs                 IDENT           rgs
 (                   (               
+Syntax error syntax error
 1                   INTEGER_CONST   1
 )                   )               
 :-                  REF_ASSIGN      

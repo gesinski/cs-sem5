@@ -1,9 +1,9 @@
 #
 CC=gcc
 LEX=flex
-YFLAGS=-Wcounterexamples
+YFLAGS=
 PLANG=simula
-
+# -Wcounterexamples
 % : %.tab.o %.o 
 	$(CC) $< $*.o $(LDFLAGS) -o $@
 

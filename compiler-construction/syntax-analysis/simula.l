@@ -42,17 +42,11 @@ uint	[0-9]+|(2|4|8|16)[Rr][0-9A-Fa-f]+
 (?i:delay)        return process_token(yytext, "KW_DELAY", "", KW_DELAY);
 (?i:do)           return process_token(yytext, "KW_DO", "", KW_DO);
 (?i:else)         return process_token(yytext, "KW_ELSE", "", KW_ELSE);
-(?i:end) {
-    comm_beg = yylineno;              
-    process_token(yytext, "KW_END", "", KW_END);
-    BEGIN(END_COMMENT);                
-}
-<END_COMMENT>[^;\n]* ;
-<END_COMMENT>\; {
-    BEGIN(INITIAL);
-    return process_token(";", ";", "", ';');
-}
-<END_COMMENT>\n {yywrap(); BEGIN(INITIAL); }
+(?i:end)           { BEGIN(END_COMMENT); comm_beg = yylineno; return process_token(yytext, "KW_END", "", KW_END);}
+<INITIAL>(?i:end)      { BEGIN(END_COMMENT); comm_beg = yylineno; }
+<END_COMMENT>[^;\n]*    ; 
+<END_COMMENT>\n {yywrap(); BEGIN(INITIAL);}
+<END_COMMENT>";"         { BEGIN(INITIAL); return process_token(";", ";", "", ';'); }
 (?i:eq)           return process_token(yytext, "KW_EQ", "", KW_EQ);
 (?i:eqv)          return process_token(yytext, "KW_EQV", "", KW_EQV);
 (?i:external)     return process_token(yytext, "KW_EXTERNAL", "", KW_EXTERNAL);
@@ -126,7 +120,7 @@ uint	[0-9]+|(2|4|8|16)[Rr][0-9A-Fa-f]+
     BEGIN(DIRECT_COMMENT);
 }
 <DIRECT_COMMENT>[^;\n]+ ; 
-<DIRECT_COMMENT>;\n? { BEGIN(INITIAL); } 
+<DIRECT_COMMENT>;\n? { BEGIN(INITIAL);} 
 <DIRECT_COMMENT>\n  {yywrap(); BEGIN(INITIAL); }  
 
  /* strings */
