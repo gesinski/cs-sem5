@@ -4,8 +4,8 @@
 #include <ncurses.h>
 #include <random>
 
-std::vector<std::string> load_file(const std::string& filename) {
-    std::ifstream file(filename);
+std::vector<std::string> load_file(const std::string& file_name) {
+    std::ifstream file(file_name);
     std::vector<std::string> lines;
     std::string line;
 

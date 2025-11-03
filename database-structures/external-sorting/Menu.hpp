@@ -1,6 +1,3 @@
-#include <ncurses.h>
-#include <vector>
-#include <fstream>
 #include "generator.hpp"
 #include "ExternalSorter.hpp"
 
