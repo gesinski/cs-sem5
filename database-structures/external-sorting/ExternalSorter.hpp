@@ -60,27 +60,46 @@ private:
         getch();
     }
 
-    void creating_runs(int blocking_factor, int buffers_num, BlockIO &file_manager) {
-        bool eof_reached = false;
-        std::vector<std::string> file_names;
-        while(!eof_reached) {
+    void check_for_simulation(const std::vector<std::string> &buffer) {
+        if(!simulate_till_end) {
+            clear();
+            mvprintw(0, 0, "Created run %d with %lu records.", runs, buffer.size());
+            mvprintw(1, 0, "Press 's' to simulate till end, any other key to show sorted file...");
+            refresh();
+            int ch = getch();
+            if(ch == 's' || ch == 'S') {
+                simulate_till_end = true;
+            }
+            else {
+                show_sorted_file(buffer);
+            }
+        }
+    }
+
+    std::vector<std::string> creating_runs(int blocking_factor, int buffers_num, BlockIO &file_manager) {
+        std::vector<std::string> files_names;
+        while(true) {
             std::vector<std::string> buffer;
-            runs++;
-            for(int current_record = 0; current_record < blocking_factor * buffers_num; current_record++) {
+
+            size_t limit = static_cast<size_t>(blocking_factor) * static_cast<size_t>(buffers_num);
+            for(size_t current_record = 0; current_record < limit; current_record++) {
                 std::string record = file_manager.read_record();
                 if(record == "EOF") {
-                    eof_reached = true;
                     break;
                 } else {
-                    runs++;
                     buffer.push_back(record);
                 }
+            }
+
+            if (buffer.empty()) {
+                break;
             }
 
             std::sort(buffer.begin(), buffer.end());
             
             std::string tape_name = create_temp_file("tape");
-            file_names.push_back(tape_name);
+            runs++;
+            files_names.push_back(tape_name);
             std::ofstream tape(tape_name);
 
             for(std::string &record : buffer) {
@@ -89,24 +108,21 @@ private:
 
             tape.close();
 
-            if(!simulate_till_end) {
-                clear();
-                mvprintw(0, 0, "Created run %d with %lu records.", runs, buffer.size());
-                mvprintw(1, 0, "Press 's' to simulate till end, any other key to show sorted file...");
-                refresh();
-                int ch = getch();
-                if(ch == 's' || ch == 'S') {
-                    simulate_till_end = true;
-                }
-                else {
-                    show_sorted_file(buffer);
-                }
-            } 
+            check_for_simulation(buffer);
         }
+        return files_names;
     }
 
-    void merging() {
-        ;
+    void merging(int blocking_factor, int buffers_num, BlockIO &file_manager, const std::vector<std::string> &files_names) {
+        size_t runs_count = 0;
+        while(true) {
+            for(int current_buffer = 0; current_buffer < buffers_num - 1; current_buffer++) {
+                // implementacja scalania
+            }
+            if (runs_count == files_names.size()) {
+                break;
+            }
+        }
     }
 public:
     ExternalSorter(const std::string &file_name) : FILE_NAME(file_name){}
@@ -117,8 +133,8 @@ public:
 
         BlockIO file_manager(FILE_NAME);
         
-        creating_runs(blocking_factor, buffers_num, file_manager);
+        std::vector<std::string> files_names = creating_runs(blocking_factor, buffers_num, file_manager);
 
-        merging();
+        // merging(blocking_factor, buffers_num, file_manager, files_names);
     }
 };
