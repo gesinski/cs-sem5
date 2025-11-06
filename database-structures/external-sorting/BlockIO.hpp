@@ -4,9 +4,8 @@
 #include <fstream>
 
 class BlockIO {
-private:
-    std::ifstream file;
 public:
+    std::ifstream file;
     int disk_reads = 0, disk_writes = 0;
     int disk_operations = 0;
 
@@ -16,9 +15,10 @@ public:
             mvprintw(0, 0, "Cannot open %s for writing", file_name.c_str());
         }
     }
-    std::string read_record() {
+
+    std::string read_record(std::ifstream &input_file) {
         std::string record;
-        if(std::getline(file, record)) {
+        if(std::getline(input_file, record)) {
             disk_reads++;
             disk_operations++;
             return record;
