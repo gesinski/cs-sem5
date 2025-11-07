@@ -2,12 +2,29 @@
 #include <unistd.h>
 #include <cstring> 
 #include <algorithm>
+#include <tuple>
+#include <queue>
+#include <filesystem>
+#include <system_error>
 
 class ExternalSorter {
 private:
     const std::string FILE_NAME;
     int runs = 0;
     bool simulate_till_end = false;
+
+    struct heap_item {
+        std::string value;    
+        int source;      
+    };
+
+    struct min_cmp {
+        bool operator()(heap_item const &a, heap_item const &b) const {
+            if (a.value == b.value)
+                return a.source > b.source;
+            return a.value > b.value;
+        }
+    };
 
     void read_parameters(int &blocking_factor, int &buffers_num) {
         echo();
@@ -63,8 +80,8 @@ private:
     void check_for_simulation(const std::vector<std::string> &buffer) {
         if(!simulate_till_end) {
             clear();
-            mvprintw(0, 0, "Created run %d with %lu records.", runs, buffer.size());
-            mvprintw(1, 0, "Press 's' to simulate till end, any other key to show sorted file...");
+            //mvprintw(0, 0, "Created run %d with %lu records.", runs, buffer.size());
+            mvprintw(0, 0, "Press 's' to simulate till end, any other key to show sorted file...");
             refresh();
             int ch = getch();
             if(ch == 's' || ch == 'S') {
@@ -83,7 +100,7 @@ private:
 
             size_t limit = static_cast<size_t>(blocking_factor) * static_cast<size_t>(buffers_num);
             for(size_t current_record = 0; current_record < limit; current_record++) {
-                std::string record = file_manager.read_record();
+                std::string record = file_manager.read_record(file_manager.file);
                 if(record == "EOF") {
                     break;
                 } else {
@@ -113,16 +130,94 @@ private:
         return files_names;
     }
 
-    void merging(int blocking_factor, int buffers_num, BlockIO &file_manager, const std::vector<std::string> &files_names) {
-        size_t runs_count = 0;
-        while(true) {
-            for(int current_buffer = 0; current_buffer < buffers_num - 1; current_buffer++) {
-                // implementacja scalania
+    void merging(int blocking_factor, int buffers_num, BlockIO &file_manager, std::vector<std::string> &files_names) {
+        while(files_names.size() > 1) {
+            int current_buffer = 0;
+            std::vector<std::ifstream> run_files;
+
+            buffers_num - 1 < 2 ? buffers_num = 3 : buffers_num;
+            std::vector<std::string> group_input_names;
+            while(current_buffer < buffers_num - 1) {
+                if(files_names.size() == static_cast<size_t>(current_buffer)) {
+                    break;
+                } 
+
+                group_input_names.push_back(files_names[current_buffer]);
+                run_files.emplace_back(files_names[current_buffer]);
+                current_buffer++;
             }
-            if (runs_count == files_names.size()) {
-                break;
+            files_names.erase(files_names.begin(), files_names.begin() + current_buffer);
+
+            std::priority_queue<heap_item, std::vector<heap_item>, min_cmp> pq;
+            std::string output_run_name = create_temp_file("tape");
+            files_names.push_back(output_run_name);
+            std::ofstream output_run(output_run_name);
+
+            for(size_t k = 0; k < run_files.size(); k++) {
+                std::string record;
+                if(std::getline(run_files[k], record)) {
+                    pq.push({record, static_cast<int>(k)});
+                }
+            }
+                
+            std::vector<std::string> buffer;
+                
+            while(!pq.empty()) {
+                heap_item min_record = pq.top(); 
+                pq.pop();
+                file_manager.write_record(output_run, min_record.value);
+                buffer.push_back(min_record.value);
+
+                check_for_simulation(buffer);
+
+                std::string next_record;
+                if(std::getline(run_files[min_record.source], next_record)) {
+                    pq.push({next_record, min_record.source});
+                }
+            }
+            for(auto &f : run_files)
+                f.close();
+            output_run.close();
+
+            for(const auto &infile : group_input_names) {
+                std::error_code rem_ec;
+                if(std::filesystem::exists(infile)) {
+                    std::filesystem::remove(infile, rem_ec);
+                    if(rem_ec) {
+                        mvprintw(0, 0, "Warning: cannot remove temp file %s: %s", infile.c_str(), rem_ec.message().c_str());
+                        refresh();
+                    }
+                }
             }
         }
+        const std::string &final_run = files_names[0];
+        const std::string dest_dir = "output";
+        std::error_code ec;
+
+        std::filesystem::path dest_path(dest_dir);
+        if(std::filesystem::is_directory(dest_path)) {
+            dest_path /= std::filesystem::path(final_run).filename();
+        }
+
+        std::filesystem::copy_file(final_run, dest_path, std::filesystem::copy_options::overwrite_existing, ec);
+
+        if(ec) {
+            mvprintw(0, 0, "Warning: cannot copy %s to %s: %s",
+                    final_run.c_str(), dest_path.string().c_str(), ec.message().c_str());
+        } else {
+            std::error_code rem_ec;
+            std::filesystem::remove(final_run, rem_ec);
+            if(rem_ec) {
+                mvprintw(1, 0, "Warning: cannot remove temp file %s: %s",
+                        final_run.c_str(), rem_ec.message().c_str());
+            }
+
+            clear();
+            mvprintw(0, 0, "Final output written to %s", dest_path.string().c_str());
+        }
+
+        refresh();
+        getch();
     }
 public:
     ExternalSorter(const std::string &file_name) : FILE_NAME(file_name){}
@@ -135,6 +230,6 @@ public:
         
         std::vector<std::string> files_names = creating_runs(blocking_factor, buffers_num, file_manager);
 
-        // merging(blocking_factor, buffers_num, file_manager, files_names);
+        merging(blocking_factor, buffers_num, file_manager, files_names);
     }
 };
