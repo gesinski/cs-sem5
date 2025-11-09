@@ -177,6 +177,7 @@ private:
             }
             for(auto &f : run_files)
                 f.close();
+            runs++;
             output_run.close();
 
             for(const auto &infile : group_input_names) {
@@ -231,5 +232,14 @@ public:
         std::vector<std::string> files_names = creating_runs(blocking_factor, buffers_num, file_manager);
 
         merging(blocking_factor, buffers_num, file_manager, files_names);
+
+        clear();
+        mvprintw(0, 0, "Disk reads:%d", file_manager.disk_reads);
+        mvprintw(1, 0, "Disk writes:%d", file_manager.disk_writes);
+        mvprintw(2, 0, "Phases:");
+        mvprintw(3, 0, "Runs:%d", runs);
+        mvprintw(4, 0, "Disk operations:%d", file_manager.disk_operations);
+        refresh();
+        getch();
     }
 };
