@@ -10,7 +10,7 @@
 class ExternalSorter {
 private:
     const std::string FILE_NAME;
-    int runs = 0;
+    int runs = 0, phases = 0;
     bool simulate_till_end = false;
 
     struct heap_item {
@@ -70,7 +70,7 @@ private:
         clear();
         mvprintw(0, 0, "Sorted records in the current run:");
         for(size_t i = 0; i < buffer.size(); i++) {
-            mvprintw(i + 1, 0, "%s", buffer[i].c_str());
+            mvprintw(i + 1, 0, "%ld. %s", i, buffer[i].c_str());
         }
         mvprintw(buffer.size() + 2, 0, "Press any key to continue...");
         refresh();
@@ -98,13 +98,15 @@ private:
         while(true) {
             std::vector<std::string> buffer;
 
-            size_t limit = static_cast<size_t>(blocking_factor) * static_cast<size_t>(buffers_num);
-            for(size_t current_record = 0; current_record < limit; current_record++) {
-                std::string record = file_manager.read_record(file_manager.file);
-                if(record == "EOF") {
+            
+            for(size_t i = 0; i < static_cast<size_t>(buffers_num); i++) {
+                std::vector<std::string> reading_buffer = file_manager.read_records(file_manager.file, blocking_factor);
+                
+                if(!reading_buffer.empty() && reading_buffer[0] == "EOF") {
                     break;
                 } else {
-                    buffer.push_back(record);
+                    for(const auto &record : reading_buffer)
+                        buffer.push_back(record);
                 }
             }
 
@@ -115,13 +117,11 @@ private:
             std::sort(buffer.begin(), buffer.end());
             
             std::string tape_name = create_temp_file("tape");
-            runs++;
             files_names.push_back(tape_name);
             std::ofstream tape(tape_name);
 
-            for(std::string &record : buffer) {
-                file_manager.write_record(tape, record);
-            }
+            file_manager.write_records(tape, buffer);
+            runs++;
 
             tape.close();
 
@@ -161,23 +161,24 @@ private:
             }
                 
             std::vector<std::string> buffer;
+            phases++;
                 
             while(!pq.empty()) {
                 heap_item min_record = pq.top(); 
                 pq.pop();
-                file_manager.write_record(output_run, min_record.value);
                 buffer.push_back(min_record.value);
-
-                check_for_simulation(buffer);
 
                 std::string next_record;
                 if(std::getline(run_files[min_record.source], next_record)) {
                     pq.push({next_record, min_record.source});
                 }
             }
+
+            check_for_simulation(buffer);
+            file_manager.write_records(output_run, buffer);
+
             for(auto &f : run_files)
                 f.close();
-            runs++;
             output_run.close();
 
             for(const auto &infile : group_input_names) {
@@ -234,11 +235,11 @@ public:
         merging(blocking_factor, buffers_num, file_manager, files_names);
 
         clear();
-        mvprintw(0, 0, "Disk reads:%d", file_manager.disk_reads);
-        mvprintw(1, 0, "Disk writes:%d", file_manager.disk_writes);
-        mvprintw(2, 0, "Phases:");
-        mvprintw(3, 0, "Runs:%d", runs);
-        mvprintw(4, 0, "Disk operations:%d", file_manager.disk_operations);
+        mvprintw(0, 0, "Disk reads: %d", file_manager.disk_reads);
+        mvprintw(1, 0, "Disk writes: %d", file_manager.disk_writes);
+        mvprintw(2, 0, "Phases: %d", phases);
+        mvprintw(3, 0, "Runs: %d", runs);
+        mvprintw(4, 0, "Disk operations: %d", file_manager.disk_operations);
         refresh();
         getch();
     }

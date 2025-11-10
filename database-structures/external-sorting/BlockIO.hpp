@@ -16,19 +16,27 @@ public:
         }
     }
 
-    std::string read_record(std::ifstream &input_file) {
+    std::vector<std::string> read_records(std::ifstream &input_file, int blocking_factor) {
+        std::vector<std::string> reading_buffer;
         std::string record;
-        if(std::getline(input_file, record)) {
+
+        for (int i = 0; i < blocking_factor && std::getline(input_file, record); ++i) {
+            reading_buffer.push_back(record);
+        }
+
+        if (!reading_buffer.empty()) {
             disk_reads++;
             disk_operations++;
-            return record;
+            return reading_buffer;
         } else {
-            return "EOF";
+            return {"EOF"};  
         }
     }
     
-    void write_record(std::ofstream &out_file, std::string &record) {
-        out_file << record << "\n";
+    void write_records(std::ofstream &out_file, std::vector<std::string> &buffer) {
+        for(std::string &record : buffer) {
+            out_file << record << "\n";
+        }
         disk_writes++;
         disk_operations++;
     }
