@@ -153,23 +153,25 @@ private:
             files_names.push_back(output_run_name);
             std::ofstream output_run(output_run_name);
 
+            std::vector<std::string> starting_buffer = file_manager.read_starting_records(run_files);
             for(size_t k = 0; k < run_files.size(); k++) {
                 std::string record;
-                if(std::getline(run_files[k], record)) {
-                    pq.push({record, static_cast<int>(k)});
+                if(starting_buffer[k] != "") {
+                    pq.push({starting_buffer[k], static_cast<int>(k)});
                 }
             }
                 
             std::vector<std::string> buffer;
             phases++;
-                
+
             while(!pq.empty()) {
                 heap_item min_record = pq.top(); 
                 pq.pop();
                 buffer.push_back(min_record.value);
 
-                std::string next_record;
-                if(std::getline(run_files[min_record.source], next_record)) {
+                std::string next_record = file_manager.read_record(run_files[min_record.source]);
+
+                if(next_record != "") {
                     pq.push({next_record, min_record.source});
                 }
             }

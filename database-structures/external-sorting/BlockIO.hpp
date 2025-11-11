@@ -32,6 +32,32 @@ public:
             return {"EOF"};  
         }
     }
+
+    std::vector<std::string> read_starting_records(std::vector<std::ifstream> &run_files) {
+        std::vector<std::string> starting_buffer;
+        for(size_t k = 0; k < run_files.size(); k++) {
+            std::string record;
+            if(std::getline(run_files[k], record))
+                starting_buffer.push_back(record);
+            else
+                return starting_buffer;
+            disk_reads++;
+            disk_operations++;
+        }
+        return starting_buffer;
+    }
+
+    std::string read_record(std::ifstream &input_file) {
+        std::string record;
+        if(std::getline(input_file, record)) {
+            disk_reads++;
+            disk_operations++;
+            return record;
+        }
+        else {
+            return "";
+        }
+    }
     
     void write_records(std::ofstream &out_file, std::vector<std::string> &buffer) {
         for(std::string &record : buffer) {
