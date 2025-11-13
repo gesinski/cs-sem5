@@ -97,7 +97,7 @@ private:
         std::vector<std::string> files_names;
         while(true) {
             std::vector<std::string> buffer;
-
+            //using only n-1 buffers
             
             for(size_t i = 0; i < static_cast<size_t>(buffers_num); i++) {
                 std::vector<std::string> reading_buffer = file_manager.read_records(file_manager.file, blocking_factor);
@@ -155,7 +155,6 @@ private:
 
             std::vector<std::string> starting_buffer = file_manager.read_starting_records(run_files);
             for(size_t k = 0; k < run_files.size(); k++) {
-                std::string record;
                 if(starting_buffer[k] != "") {
                     pq.push({starting_buffer[k], static_cast<int>(k)});
                 }
