@@ -97,10 +97,9 @@ private:
         std::vector<std::string> files_names;
         while(true) {
             std::vector<std::string> buffer;
-            //using only n-1 buffers
             
             for(size_t i = 0; i < static_cast<size_t>(buffers_num); i++) {
-                std::vector<std::string> reading_buffer = file_manager.read_records(file_manager.file, blocking_factor);
+                std::vector<std::string> reading_buffer = file_manager.read_records(file_manager.file);
                 
                 if(!reading_buffer.empty() && reading_buffer[0] == "EOF") {
                     break;
@@ -161,17 +160,21 @@ private:
             }
                 
             std::vector<std::string> buffer;
+            std::vector<BlockIO::file_state> file_states(run_files.size());
             phases++;
 
-            while(!pq.empty()) {
-                heap_item min_record = pq.top(); 
+            while (!pq.empty()) {
+                heap_item min_record = pq.top();
                 pq.pop();
+
                 buffer.push_back(min_record.value);
 
-                std::string next_record = file_manager.read_record(run_files[min_record.source]);
+                int src = min_record.source;
 
-                if(next_record != "") {
-                    pq.push({next_record, min_record.source});
+                std::string next_record = file_manager.read_record(run_files[src], file_states[src]);
+
+                if (!next_record.empty()) {
+                    pq.push({next_record, src});
                 }
             }
 
@@ -229,7 +232,7 @@ public:
         int blocking_factor, buffers_num;
         read_parameters(blocking_factor, buffers_num);
 
-        BlockIO file_manager(FILE_NAME);
+        BlockIO file_manager(FILE_NAME, blocking_factor);
         
         std::vector<std::string> files_names = creating_runs(blocking_factor, buffers_num, file_manager);
 
