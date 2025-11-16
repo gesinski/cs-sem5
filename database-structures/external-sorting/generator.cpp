@@ -10,7 +10,7 @@ std::vector<std::string> load_file(const std::string& file_name) {
     std::string line;
 
     if(!file.is_open()) {
-        mvprintw(6, 0, "Cannot open first_names.txt or last_names.txt for writing");
+        mvprintw(6, 0, "Cannot open first_names.txt or last_names.txt for reading");
         return lines;
     }
 
