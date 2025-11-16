@@ -30,11 +30,11 @@ public:
         std::vector<std::string> reading_buffer;
         std::string record;
 
-        for (int i = 0; i < blocking_factor && std::getline(input_file, record); ++i) {
+        for(int i = 0; i < blocking_factor && std::getline(input_file, record); ++i) {
             reading_buffer.push_back(record);
         }
 
-        if (!reading_buffer.empty()) {
+        if(!reading_buffer.empty()) {
             disk_reads++;
             disk_operations++;
             return reading_buffer;
@@ -86,7 +86,6 @@ public:
         disk_operations++;
     }
 
-
     std::string read_record(std::ifstream &input_file, file_state &state) {
         if(state.index >= state.block.size()) {
             if (state.eof)
@@ -100,7 +99,6 @@ public:
 
         return state.block[state.index++];
     }
-
     
     void write_records(std::ofstream &out_file, const std::vector<std::string> &buffer){
         std::string block;

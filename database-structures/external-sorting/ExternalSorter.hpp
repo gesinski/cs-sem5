@@ -163,7 +163,7 @@ private:
             std::vector<BlockIO::file_state> file_states(run_files.size());
             phases++;
 
-            while (!pq.empty()) {
+            while(!pq.empty()) {
                 heap_item min_record = pq.top();
                 pq.pop();
 
@@ -173,7 +173,7 @@ private:
 
                 std::string next_record = file_manager.read_record(run_files[src], file_states[src]);
 
-                if (!next_record.empty()) {
+                if(!next_record.empty()) {
                     pq.push({next_record, src});
                 }
             }
