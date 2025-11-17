@@ -176,8 +176,9 @@ private:
                 }
             }
 
-            check_for_simulation(buffer);
             file_manager.write_records(output_run, buffer);
+
+            check_for_simulation(buffer);
 
             for(auto &f : run_files)
                 f.close();
@@ -239,9 +240,8 @@ public:
         clear();
         mvprintw(0, 0, "Disk reads: %d", file_manager.disk_reads);
         mvprintw(1, 0, "Disk writes: %d", file_manager.disk_writes);
-        mvprintw(2, 0, "Phases: %d", phases);
-        mvprintw(3, 0, "Runs: %d", runs);
-        mvprintw(4, 0, "Disk operations: %d", file_manager.disk_operations);
+        mvprintw(2, 0, "Disk operations: %d", file_manager.disk_operations);
+        mvprintw(3, 0, "Phases: %d", phases);
         refresh();
         getch();
     }
