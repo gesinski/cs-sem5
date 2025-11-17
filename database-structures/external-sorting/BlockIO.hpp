@@ -43,28 +43,6 @@ public:
         }
     }
 
-    std::vector<std::string> read_starting_records( std::vector<std::ifstream> &run_files) {
-        std::vector<std::string> buffer;
-
-        for(size_t start = 0; start < run_files.size(); start += blocking_factor) {
-
-            size_t end = std::min(start + blocking_factor, run_files.size());
-
-            for(size_t i = start; i < end; i++) {
-                std::string record;
-                if(std::getline(run_files[i], record)) {
-                    buffer.push_back(record);
-                }
-                else
-                    return buffer;
-            }
-            disk_reads++;
-            disk_operations++;
-        }
-
-        return buffer;
-    }
-
     void read_block(std::ifstream &input_file, file_state &state) {
         state.block.clear();
         state.index = 0;

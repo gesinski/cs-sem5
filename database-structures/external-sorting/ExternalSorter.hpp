@@ -152,16 +152,14 @@ private:
             files_names.push_back(output_run_name);
             std::ofstream output_run(output_run_name);
 
-            std::vector<std::string> starting_buffer = file_manager.read_starting_records(run_files);
-            for(size_t k = 0; k < run_files.size(); k++) {
-                if(starting_buffer[k] != "") {
-                    pq.push({starting_buffer[k], static_cast<int>(k)});
-                }
-            }
-                
             std::vector<std::string> buffer;
             std::vector<BlockIO::file_state> file_states(run_files.size());
             phases++;
+
+            for(size_t k = 0; k < run_files.size(); k++) {
+                std::string next_record = file_manager.read_record(run_files[k], file_states[k]);
+                pq.push({next_record, static_cast<int>(k)});
+            }
 
             while(!pq.empty()) {
                 heap_item min_record = pq.top();
