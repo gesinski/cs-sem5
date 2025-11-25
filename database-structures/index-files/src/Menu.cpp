@@ -203,7 +203,13 @@ Menu::Menu() {
         char root_record[256];
         getnstr(root_record, 255);  
 
-        //get record and transform it to node        
+        long long page = 1;
+        int key = std::stoi(root_record);  
+
+        std::string record_out = root_record;       
+        record_out.resize(RECORD_SIZE, ' '); 
+
+        b_tree.set_root(new Node(page, key, nullptr, nullptr));
 
         std::ifstream records(RECORDS_FILE_NAME);
         if(!records) {
@@ -214,10 +220,13 @@ Menu::Menu() {
                 getch();
                 return;
             }
+            create_file.write(record_out.data(), RECORD_SIZE);
             create_file.close();
         } else {
             records.close();
             std::ofstream clear_file(RECORDS_FILE_NAME, std::ios::trunc);
+            clear_file.write(record_out.data(), RECORD_SIZE); 
+            clear_file.write(record_out.data(), RECORD_SIZE); 
             clear_file.close();
         }
 

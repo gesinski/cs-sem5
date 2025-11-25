@@ -1,6 +1,7 @@
 #include <ncurses.h>
 #include "BTree.hpp"
 #include "FileManager.hpp"
+#define RECORD_SIZE 32
 
 class Menu {
 private:
