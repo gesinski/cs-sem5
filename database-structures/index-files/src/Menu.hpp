@@ -1,6 +1,5 @@
 #include <ncurses.h>
 #include "BTree.hpp"
-#include "FileManager.hpp"
 #define RECORD_SIZE 32
 
 class Menu {
@@ -43,7 +42,7 @@ private:
 
     int start_options();
 
-    std::string insert_records_from_file(BTree &b_tree);
+    std::string insert_file_name();
 
 public:
     Menu();

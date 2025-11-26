@@ -153,7 +153,7 @@ int Menu::start_options() {
 //     }
 // }
 
-std::string Menu::insert_records_from_file(BTree &b_tree) {
+std::string Menu::insert_file_name() {
     input_mode();
     mvprintw(0, 0, "Enter filename: ");
 
@@ -172,7 +172,6 @@ std::string Menu::insert_records_from_file(BTree &b_tree) {
     else {
         output_mode();
         mvprintw(0, 0, "You entered file: %s", FILE_NAME);
-        mvprintw(1, 0, "B-tree generated successfully");
         mvprintw(2, 0, "Press any key to continue...");
         refresh();
         getch();
@@ -194,7 +193,7 @@ Menu::Menu() {
     const std::string BTREE_FILE_NAME = "b-tree";
     std::string RECORDS_FILE_NAME = "records";
     if(start_options() == 1) {
-        RECORDS_FILE_NAME = insert_records_from_file(b_tree);
+        RECORDS_FILE_NAME = insert_file_name();
     }
     else {
         clear();
@@ -226,7 +225,6 @@ Menu::Menu() {
             records.close();
             std::ofstream clear_file(RECORDS_FILE_NAME, std::ios::trunc);
             clear_file.write(record_out.data(), RECORD_SIZE); 
-            clear_file.write(record_out.data(), RECORD_SIZE); 
             clear_file.close();
         }
 
@@ -238,6 +236,8 @@ Menu::Menu() {
 
     }
     FileManager file_manager(RECORDS_FILE_NAME, BTREE_FILE_NAME);
+
+    b_tree.create_btree(file_manager);
 
     Option current_option = OPTION_1;
     print_main_options(current_option);
