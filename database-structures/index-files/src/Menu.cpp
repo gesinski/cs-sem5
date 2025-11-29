@@ -1,4 +1,11 @@
 #include "Menu.hpp"
+#include <cstdint>
+#include <cstring>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <cctype>
+#include <arpa/inet.h> 
 
 void Menu::print_main_options(Option current_option) {
     clear();
@@ -193,7 +200,7 @@ Menu::Menu() {
     const std::string BTREE_FILE_NAME = "b-tree";
     std::string RECORDS_FILE_NAME = "records";
     if(start_options() == 1) {
-        RECORDS_FILE_NAME = insert_file_name();
+        RECORDS_FILE_NAME = "initial_records"; //insert_file_name();
     }
     else {
         clear();
@@ -203,12 +210,46 @@ Menu::Menu() {
         getnstr(root_record, 255);  
 
         long long page = 1;
-        int key = std::stoi(root_record);  
 
-        std::string record_out = root_record;       
-        record_out.resize(RECORD_SIZE, ' '); 
+        std::string s(root_record);
+        std::istringstream iss(s);
 
-        b_tree.set_root(new Node(page, key, nullptr, nullptr));
+        unsigned long long tmp = 0;
+        if(!(iss >> tmp)) {
+            tmp = 0;
+        }
+        uint32_t key = static_cast<uint32_t>(tmp);
+        uint32_t key_be = htonl(key);
+
+        std::string last, first;
+        if(!(iss >> last)) {
+            last.clear();
+            first.clear();
+        } else {
+            std::string rest;
+            std::getline(iss, rest);
+
+            auto trim_inplace = [](std::string &t) {
+                t.erase(t.begin(), std::find_if(t.begin(), t.end(), [](unsigned char ch){ return !std::isspace(ch); }));
+                t.erase(std::find_if(t.rbegin(), t.rend(), [](unsigned char ch){ return !std::isspace(ch); }).base(), t.end());
+            };
+
+            trim_inplace(rest);
+            first = rest;
+        }
+
+        std::string fullname;
+        if (last.empty()) fullname = first;
+        else if (first.empty()) fullname = last;
+        else fullname = last + " " + first;
+
+        char record_out[RECORD_SIZE];
+        std::memcpy(record_out, &key_be, sizeof(key_be));
+
+        if (fullname.size() > 28) fullname.resize(28);
+        std::memset(record_out + 4, ' ', 28);
+        if (!fullname.empty())
+            std::memcpy(record_out + 4, fullname.data(), fullname.size());
 
         std::ifstream records(RECORDS_FILE_NAME);
         if(!records) {
@@ -219,12 +260,12 @@ Menu::Menu() {
                 getch();
                 return;
             }
-            create_file.write(record_out.data(), RECORD_SIZE);
+            create_file.write(record_out, RECORD_SIZE);
             create_file.close();
         } else {
             records.close();
             std::ofstream clear_file(RECORDS_FILE_NAME, std::ios::trunc);
-            clear_file.write(record_out.data(), RECORD_SIZE); 
+            clear_file.write(record_out, RECORD_SIZE); 
             clear_file.close();
         }
 

@@ -1,9 +1,11 @@
 class Node {
 private:
-    int page_num;
-    int key;
-    int *left;
-    int *right;
+    struct value{
+        int key;
+        int page_num;
+    };
+    int d;
+    int pointers[];
 public:
-    Node(int page_num, int key, int *left, int *right) : page_num(page_num), key(key), left(left), right(right) {}
+    Node(int page_num, int key, int *left, int *right){}
 };
