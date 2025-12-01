@@ -17,8 +17,13 @@ public:
     FileManager(const std::string &records_file_name, const std::string &btree_file_name) : 
             records_file(records_file_name), b_tree_file(btree_file_name) {};
 
-    void read_block_records(std::ifstream &file, int block_size, std::vector<std::string> &buffer);
-    void write_block_records(std::ofstream &file, int block_size, const std::vector<std::string> &buffer);
+    std::string read_btree_block(int page);
+
+    void write_btree_block(std::string &block, int page);
+
+    std::string read_records_block(int page);
+
+    void write_records_block(std::string &block, int page);
 
     ~FileManager();
 };

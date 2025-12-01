@@ -5,7 +5,6 @@
 #include <sstream>
 #include <algorithm>
 #include <cctype>
-#include <arpa/inet.h> 
 
 void Menu::print_main_options(Option current_option) {
     clear();
@@ -104,62 +103,6 @@ int Menu::start_options() {
     }
 }
 
-// void option_generate_records() {
-// const std::string FILE_NAME = "generated_records";
-// std::ofstream records_out(FILE_NAME);
-// if(!records_out) {
-//         mvprintw(6, 0, "Cannot open %s for writing", FILE_NAME.c_str());
-//     } else {
-//         input_mode();
-//         mvprintw(0, 0, "Enter how many records generate: ");
-//         mvprintw(1, 0, "> ");
-//         char buffer[16];
-//         getnstr(buffer, 15);
-//         generate_records(records_out, std::stoi(buffer)); 
-        
-//         records_out.close();
-//         output_mode();
-        
-//         mvprintw(0, 0, "File '%s' generated successfully. Press any key to continue...", FILE_NAME.c_str());
-        
-//         refresh();
-//         getch();
-//         ExternalSorter sorter(FILE_NAME);
-//         sorter.sort();
-//     }
-// }
-
-// void option_enter_records() {
-//     const std::string FILE_NAME = "input_records";
-//     std::ofstream records_out(FILE_NAME);
-//     if(!records_out) {
-//         mvprintw(6, 0, "Cannot open %s for writing", FILE_NAME.c_str());
-//     } else {
-//         input_mode();
-//         mvprintw(0, 0, "Enter names (write q to STOP):\n");
-//         std::string name;
-//         int row = 1;
-//         while(true) {
-//             char buffer[256];
-//             mvprintw(row, 0, "> ");
-//             getnstr(buffer, 255);  
-//             name = buffer;
-//             if(name == "q" || name == "Q") 
-//                 break;
-//             records_out << name << '\n';  
-//             row++;
-//         }
-//         records_out.close();
-//         output_mode();
-//         mvprintw(0, 0, "Names saved to %s.", FILE_NAME.c_str());
-//         mvprintw(2, 0, "Press any key to continue...");
-//         refresh();
-//         getch();
-//         ExternalSorter sorter(FILE_NAME);
-//         sorter.sort();
-//     }
-// }
-
 std::string Menu::insert_file_name() {
     input_mode();
     mvprintw(0, 0, "Enter filename: ");
@@ -196,7 +139,6 @@ Menu::Menu() {
     cbreak();
     keypad(stdscr, TRUE);
 
-    BTree b_tree;
     const std::string BTREE_FILE_NAME = "b-tree";
     std::string RECORDS_FILE_NAME = "records";
     if(start_options() == 1) {
@@ -209,7 +151,7 @@ Menu::Menu() {
         char root_record[256];
         getnstr(root_record, 255);  
 
-        long long page = 1;
+        //long long page = 1;
 
         std::string s(root_record);
         std::istringstream iss(s);
@@ -218,8 +160,7 @@ Menu::Menu() {
         if(!(iss >> tmp)) {
             tmp = 0;
         }
-        uint32_t key = static_cast<uint32_t>(tmp);
-        uint32_t key_be = htonl(key);
+        unsigned int key = static_cast<uint32_t>(tmp);
 
         std::string last, first;
         if(!(iss >> last)) {
@@ -244,7 +185,7 @@ Menu::Menu() {
         else fullname = last + " " + first;
 
         char record_out[RECORD_SIZE];
-        std::memcpy(record_out, &key_be, sizeof(key_be));
+        std::memcpy(record_out, &key, sizeof(key));
 
         if (fullname.size() > 28) fullname.resize(28);
         std::memset(record_out + 4, ' ', 28);
@@ -271,12 +212,15 @@ Menu::Menu() {
 
         output_mode();
         mvprintw(0, 0, "You opened file: %s", RECORDS_FILE_NAME.c_str());
+        mvprintw(1, 0, "%u", key);
         mvprintw(2, 0, "Press any key to continue...");
         refresh();
         getch();
-
     }
+
+    //unsigned int d = 2; // tree order
     FileManager file_manager(RECORDS_FILE_NAME, BTREE_FILE_NAME);
+    BTree b_tree;
 
     b_tree.create_btree(file_manager);
 

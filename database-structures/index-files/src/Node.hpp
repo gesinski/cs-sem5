@@ -1,11 +1,13 @@
+#include <vector>
+#include <cstdint>
+
 class Node {
-private:
-    struct value{
-        int key;
-        int page_num;
-    };
-    int d;
-    int pointers[];
 public:
-    Node(int page_num, int key, int *left, int *right){}
+    std::vector<unsigned int> key;
+    std::vector<int> block_num;
+    int page_num;
+    std::vector<int> pointers; 
+
+    Node(std::vector<unsigned int> k = {}, std::vector<int> block = {}, int page = -1, std::vector<int> ptrs = {})
+      : key(std::move(k)), block_num(std::move(block)), page_num(page), pointers(std::move(ptrs)) {}
 };
