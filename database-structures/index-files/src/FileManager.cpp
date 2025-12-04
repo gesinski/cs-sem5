@@ -1,18 +1,20 @@
 #include "FileManager.hpp"
 
-std::string read_btree_block(int page) {
+std::string FileManager::read_btree_block(int page) {
+    std::string block;
+    return block;
+}
+
+void FileManager::write_btree_block(std::string &block, int page) {
 
 }
 
-void write_btree_block(std::string &block, int page) {
-
+std::string FileManager::read_records_block(int page) {
+    std::string block;
+    return block;
 }
 
-std::string read_records_block(int page) {
-
-}
-
-void write_records_block(std::string &block, int page) {
+void FileManager::write_records_block(std::string &block, int page) {
 
 }
 

@@ -218,11 +218,11 @@ Menu::Menu() {
         getch();
     }
 
-    //unsigned int d = 2; // tree order
-    FileManager file_manager(RECORDS_FILE_NAME, BTREE_FILE_NAME);
+    unsigned int d = 2; // tree order
+    FileManager file_manager(RECORDS_FILE_NAME, BTREE_FILE_NAME, d);
     BTree b_tree;
 
-    b_tree.create_btree(file_manager);
+    b_tree.create_btree(file_manager, d);
 
     Option current_option = OPTION_1;
     print_main_options(current_option);
