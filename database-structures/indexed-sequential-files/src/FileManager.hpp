@@ -2,32 +2,45 @@
 #include <string>
 #include <vector>
 
-#define RECORD_SIZE 32
-#define PAGE_SIZE 0
+#define RECORD_SIZE 28
+#define POINTER_SIZE 4
+#define KEY_SIZE 4
+#define VALUE_SIZE 24
+#define PAGE_SIZE 32
+#define INDEX_PAGE_SIZE 8
 
 class FileManager {
 private:
-    std::ifstream records_file;
-    std::ifstream b_tree_file;
-    int record_block_size;
-    int b_tree_block_size;
-    unsigned int d;
+    std::fstream main_file;
+    std::fstream index_file;
+    std::fstream overflow_file;
+    float alpha = 0.5;
 public:
-    int current_record_disk_reads = 0;
-    int current_record_disk_writes = 0;
-    int current_btree_disk_reads = 0;
-    int current_btree_disk_writes = 0;
+    int disk_reads = 0;
+    int disk_writes = 0;
 
-    FileManager(const std::string &records_file_name, const std::string &btree_file_name, unsigned int _d) : 
-            records_file(records_file_name), b_tree_file(btree_file_name), d(_d){};
+    FileManager(const std::string &main_file_name, const std::string &index_file_name,  const std::string &overflow_file_name) : 
+            main_file(main_file_name), index_file(index_file_name), overflow_file(overflow_file_name){};
 
-    std::string read_btree_block(int page);
+    std::string read_index_page(int page_num);
 
-    void write_btree_block(std::string &block, int page);
+    void write_index_page(std::string &page, int page_num);
 
-    std::string read_records_block(int page);
+    std::string read_page(int page_num, bool overflow);
 
-    void write_records_block(std::string &block, int page);
+    void write_page(std::string &page, int page_num, bool overflow);
+
+    void fetch();
+
+    void insert();
+
+    void show_records();
+
+    void reorginize();
+
+    // void delete();
+
+    // void update();
 
     ~FileManager();
 };
