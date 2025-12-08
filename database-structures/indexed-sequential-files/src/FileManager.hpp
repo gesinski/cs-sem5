@@ -1,13 +1,15 @@
 #include <fstream>
 #include <string>
+#include <cstdint>
+#include <bits/stdc++.h>
 #include <vector>
 
 #define RECORD_SIZE 28
 #define POINTER_SIZE 4
 #define KEY_SIZE 4
 #define VALUE_SIZE 24
-#define PAGE_SIZE 32
-#define INDEX_PAGE_SIZE 8
+#define PAGE_SIZE 320
+#define INDEX_PAGE_SIZE 80
 
 class FileManager {
 private:
@@ -15,6 +17,9 @@ private:
     std::fstream index_file;
     std::fstream overflow_file;
     float alpha = 0.5;
+    unsigned int smallest_key = 0;
+    int records_main = 0;
+    int records_overflow = 0;
 public:
     int disk_reads = 0;
     int disk_writes = 0;
@@ -22,17 +27,17 @@ public:
     FileManager(const std::string &main_file_name, const std::string &index_file_name,  const std::string &overflow_file_name) : 
             main_file(main_file_name), index_file(index_file_name), overflow_file(overflow_file_name){};
 
-    std::string read_index_page(int page_num);
+    std::string read_index_page(unsigned int page_num);
 
-    void write_index_page(std::string &page, int page_num);
+    void write_index_page(char page[], unsigned int page_num);
 
-    std::string read_page(int page_num, bool overflow);
+    std::string read_page(unsigned int page_num, bool overflow);
 
-    void write_page(std::string &page, int page_num, bool overflow);
+    void write_page(char page[], unsigned int page_num, bool overflow);
 
     void fetch();
 
-    void insert();
+    void insert(unsigned int key, std::string record);
 
     void show_records();
 

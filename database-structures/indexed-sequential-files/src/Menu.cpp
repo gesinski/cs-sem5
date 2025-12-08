@@ -17,10 +17,12 @@ void Menu::print_main_options(Option current_option) {
             (current_option == OPTION_3 ? ">" : " "));
     mvprintw(5, 0, "%s 4. Update record",
             (current_option == OPTION_4 ? ">" : " "));
-    mvprintw(6, 0, "%s 5. Show file",
+    mvprintw(6, 0, "%s 5. Show records",
             (current_option == OPTION_5 ? ">" : " "));
-    mvprintw(7, 0, "%s 6. Get operations from file",
-            (current_option == OPTION_6 ? ">" : " "));      
+    mvprintw(7, 0, "%s 6. Reorganize",
+            (current_option == OPTION_6 ? ">" : " "));       
+    mvprintw(8, 0, "%s 7. Get operations from file",
+            (current_option == OPTION_7 ? ">" : " "));     
     refresh();
 }
 
@@ -103,6 +105,8 @@ Menu::Menu() {
     output_mode();
     cbreak();
     keypad(stdscr, TRUE);
+    scrollok(stdscr, TRUE); 
+    idlok(stdscr, TRUE);
 
     const std::string main_file_name = "main_file";
     const std::string index_file_name = "index_file";
