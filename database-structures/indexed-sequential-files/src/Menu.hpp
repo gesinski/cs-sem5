@@ -20,9 +20,11 @@ private:
 
     void output_mode();
 
-    void show_files();
+    void show_files(FileManager &file_manager);
 
     void show_record(FileManager &file_manager);
+
+    void reorganize_files(FileManager &file_manager);
 
     void insert_record(FileManager &file_manager);
 
@@ -31,8 +33,6 @@ private:
     void update_record(FileManager &file_manager);
 
     void show_records(FileManager &file_manager);
-
-    void reorganize_files(FileManager &file_manager);
 
     std::string input_file_name();
 
