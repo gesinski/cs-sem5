@@ -7,7 +7,7 @@
 #define RECORD_SIZE 28
 #define POINTER_SIZE 4
 #define KEY_SIZE sizeof(unsigned int)
-#define VALUE_SIZE 24
+#define DATA_SIZE 24
 #define PAGE_SIZE 320
 #define INDEX_PAGE_SIZE 80
 #define BLOCKING_FACTOR 10
@@ -28,11 +28,11 @@ public:
 
     std::string read_index_page(unsigned int page_num);
 
-    void write_index_page(const char page[], unsigned int page_num);
+    void write_index_page(struct index_record[], unsigned int page_num);
 
     std::string read_page(unsigned int page_num, bool overflow);
 
-    void write_page(const char page[], unsigned int page_num, bool overflow);
+    void write_page(struct record[], unsigned int page_num, bool overflow);
 
     void fetch();
 

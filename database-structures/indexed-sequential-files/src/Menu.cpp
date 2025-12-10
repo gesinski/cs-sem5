@@ -109,18 +109,17 @@ void Menu::show_files(FileManager &file_manager) {
                 
                 std::string page_data = file_manager.read_page(p, false);
                 
-                // Display records within this page (each record is RECORD_SIZE+POINTER_SIZE)
                 for(unsigned int r = 0; r < BLOCKING_FACTOR; r++) {
                     unsigned int offset = r * (RECORD_SIZE + POINTER_SIZE);
                     unsigned int key;
                     unsigned int pointer;
-                    char text_buf[VALUE_SIZE + 1];
+                    char text_buf[DATA_SIZE + 1];
 
                     std::memcpy(&key, page_data.data() + offset, KEY_SIZE);
                     
-                    if(key != 0) {  // Only display non-empty records
-                        std::memcpy(text_buf, page_data.data() + offset + KEY_SIZE, VALUE_SIZE);
-                        text_buf[VALUE_SIZE] = '\0';
+                    if(key != 0) {  
+                        std::memcpy(text_buf, page_data.data() + offset + KEY_SIZE, DATA_SIZE);
+                        text_buf[DATA_SIZE] = '\0';
                         std::memcpy(&pointer, page_data.data() + offset + RECORD_SIZE, POINTER_SIZE);
                         
                         mvprintw(line_count, 0, "  Record %u: Key: %u, Data: %s, Pointer: %u", r, key, text_buf, pointer);
@@ -156,18 +155,17 @@ void Menu::show_files(FileManager &file_manager) {
                 
                 std::string page_data = file_manager.read_page(p, true);
                 
-                // Display records within this page
                 for(unsigned int r = 0; r < BLOCKING_FACTOR; r++) {
                     unsigned int offset = r * (RECORD_SIZE + POINTER_SIZE);
                     unsigned int key;
                     unsigned int pointer;
-                    char text_buf[VALUE_SIZE + 1];
+                    char text_buf[DATA_SIZE + 1];
 
                     std::memcpy(&key, page_data.data() + offset, KEY_SIZE);
                     std::memcpy(&pointer, page_data.data() + offset + RECORD_SIZE, POINTER_SIZE);
                     
-                    std::memcpy(text_buf, page_data.data() + offset + KEY_SIZE, VALUE_SIZE);
-                    text_buf[VALUE_SIZE] = '\0';
+                    std::memcpy(text_buf, page_data.data() + offset + KEY_SIZE, DATA_SIZE);
+                    text_buf[DATA_SIZE] = '\0';
                     
                     if(key == 0) {
                         mvprintw(line_count, 0, "  Record %u: [EMPTY]", r);
