@@ -39,73 +39,50 @@ void Menu::output_mode() {
 }
 
 void Menu::show_files(FileManager &file_manager) {
-    // index file
-    if(!file_manager.index_file.is_open()) {
-        output_mode();
-        mvprintw(0, 0, "Index file is not available.");
-        mvprintw(2, 0, "Press any key to continue...");
-        refresh();
-        getch();
-        return;
+    const int LINES_PER_PAGE = 40;
+    std::vector<std::string> all_lines;
+    
+    // Collect all lines to display
+    if(file_manager.index_file.is_open()) {
+        file_manager.index_file.clear();
+        file_manager.index_file.seekg(0, std::ios::end);
+        std::streamsize size = file_manager.index_file.tellg();
+        file_manager.index_file.seekg(0, std::ios::beg);
+
+        if(size > 0) {
+            all_lines.push_back("=== Index file ===");
+            size_t count = static_cast<size_t>(size) / sizeof(unsigned int);
+            std::vector<unsigned int> data(count);
+            file_manager.index_file.read(reinterpret_cast<char*>(data.data()), static_cast<std::streamsize>(count * sizeof(unsigned int)));
+            
+            for(size_t i = 0; i + 1 < data.size(); i+=2) {
+                char buf[256];
+                snprintf(buf, sizeof(buf), "Key: %u, PageNO: %u", data[i], data[i+1]);
+                all_lines.push_back(buf);
+            }
+        } else {
+            all_lines.push_back("=== Index file ===");
+            all_lines.push_back("(empty)");
+        }
     }
 
-    // determine file size
-    file_manager.index_file.clear();
-    file_manager.index_file.seekg(0, std::ios::end);
-    std::streamsize size = file_manager.index_file.tellg();
-    if(size <= 0) {
-        output_mode();
-        mvprintw(0, 0, "Index file is empty.");
-        mvprintw(2, 0, "Press any key to continue...");
-        refresh();
-        getch();
-        return;
-    }
-    file_manager.index_file.seekg(0, std::ios::beg);
-
-    size_t count = static_cast<size_t>(size) / sizeof(unsigned int);
-    if(count < 2) {
-        output_mode();
-        mvprintw(0, 0, "Index file has no entries.");
-        mvprintw(2, 0, "Press any key to continue...");
-        refresh();
-        getch();
-        return;
-    }
-
-    std::vector<unsigned int> data(count);
-    file_manager.index_file.read(reinterpret_cast<char*>(data.data()), static_cast<std::streamsize>(count * sizeof(unsigned int)));
-
-    output_mode();
-    mvprintw(0, 0, "Index file:");
-    int line_count = 1;
-    for(size_t i = 0; i + 1 < data.size(); i+=2) {
-        mvprintw(line_count, 0, " Key: %u, PageNO: %u", data[i], data[i+1]);
-        line_count++;
-    }
-
-    // main file
-    mvprintw(line_count, 0, "Main file:");
-    line_count++;
-
-    if(!file_manager.main_file.is_open()) {
-        mvprintw(line_count, 0, "Main file is not available.");
-        line_count++;
-    } else {
+    // Main file
+    if(file_manager.main_file.is_open()) {
         file_manager.main_file.clear();
         file_manager.main_file.seekg(0, std::ios::end);
         std::streamsize main_size = file_manager.main_file.tellg();
         file_manager.main_file.seekg(0, std::ios::beg);
 
-        if(main_size <= 0) {
-            mvprintw(line_count, 0, "Main file is empty.");
-            line_count++;
-        } else {
+        all_lines.push_back("");
+        all_lines.push_back("=== Main file ===");
+        
+        if(main_size > 0) {
             unsigned int page_count = static_cast<unsigned int>(main_size / PAGE_SIZE);
             
             for(unsigned int p = 1; p <= page_count; p++) {
-                mvprintw(line_count, 0, "Page %u:", p);
-                line_count++;
+                char buf[256];
+                snprintf(buf, sizeof(buf), "Page %u:", p);
+                all_lines.push_back(buf);
                 
                 std::string page_data = file_manager.read_page(p, false);
                 
@@ -116,42 +93,38 @@ void Menu::show_files(FileManager &file_manager) {
                     char text_buf[DATA_SIZE + 1];
 
                     std::memcpy(&key, page_data.data() + offset, KEY_SIZE);
+                    std::memcpy(text_buf, page_data.data() + offset + KEY_SIZE, DATA_SIZE);
+                    text_buf[DATA_SIZE] = '\0';
+                    std::memcpy(&pointer, page_data.data() + offset + RECORD_SIZE, POINTER_SIZE);
                     
-                    if(key != 0) {  
-                        std::memcpy(text_buf, page_data.data() + offset + KEY_SIZE, DATA_SIZE);
-                        text_buf[DATA_SIZE] = '\0';
-                        std::memcpy(&pointer, page_data.data() + offset + RECORD_SIZE, POINTER_SIZE);
-                        
-                        mvprintw(line_count, 0, "  Record %u: Key: %u, Data: %s, Pointer: %u", r, key, text_buf, pointer);
-                        line_count++;
+                    if(key == 0) {
+                        snprintf(buf, sizeof(buf), "  Record %u: [EMPTY]", r+1);
+                    } else {
+                        snprintf(buf, sizeof(buf), "  Record %u: Key: %u, Data: %s, Pointer: %u", r+1, key, text_buf, pointer);
                     }
+                    all_lines.push_back(buf);
                 }
             }
+        } else {
+            all_lines.push_back("(empty)");
         }
     }
 
-    // overflow file
-    mvprintw(line_count, 0, "Overflow file:");
-    line_count++;
-
-    if(!file_manager.overflow_file.is_open()) {
-        mvprintw(line_count, 0, "Overflow file is not available.");
-        line_count++;
-    } else {
+    // Overflow file
+    if(file_manager.overflow_file.is_open()) {
         file_manager.overflow_file.clear();
         file_manager.overflow_file.seekg(0, std::ios::end);
         std::streamsize overflow_size = file_manager.overflow_file.tellg();
         file_manager.overflow_file.seekg(0, std::ios::beg);
 
-        if(overflow_size <= 0) {
-            mvprintw(line_count, 0, "Overflow file is empty.");
-            line_count++;
-        } else {
+        all_lines.push_back("");
+        all_lines.push_back("=== Overflow file ===");
+        
+        if(overflow_size > 0) {
             unsigned int page_count = static_cast<unsigned int>(overflow_size / PAGE_SIZE);
             
             for(unsigned int p = 1; p <= page_count; p++) {
-                mvprintw(line_count, 0, "Page %u:", p);
-                line_count++;
+                char buf[256];
                 
                 std::string page_data = file_manager.read_page(p, true);
                 
@@ -162,25 +135,52 @@ void Menu::show_files(FileManager &file_manager) {
                     char text_buf[DATA_SIZE + 1];
 
                     std::memcpy(&key, page_data.data() + offset, KEY_SIZE);
-                    std::memcpy(&pointer, page_data.data() + offset + RECORD_SIZE, POINTER_SIZE);
-                    
                     std::memcpy(text_buf, page_data.data() + offset + KEY_SIZE, DATA_SIZE);
                     text_buf[DATA_SIZE] = '\0';
+                    std::memcpy(&pointer, page_data.data() + offset + RECORD_SIZE, POINTER_SIZE);
                     
                     if(key == 0) {
-                        mvprintw(line_count, 0, "  Record %u: [EMPTY]", r);
+                        snprintf(buf, sizeof(buf), "  Record %u: [EMPTY]", r+1);
                     } else {
-                        mvprintw(line_count, 0, "  Record %u: Key: %u, Data: %s, Pointer: %u", r, key, text_buf, pointer);
+                        snprintf(buf, sizeof(buf), "  Record %u: Key: %u, Data: %s, Pointer: %u", r+1, key, text_buf, pointer);
                     }
-                    line_count++;
+                    all_lines.push_back(buf);
                 }
             }
+        } else {
+            all_lines.push_back("(empty)");
         }
     }
+
+    output_mode();
+    int current_page = 0;
+    int total_pages = (all_lines.size() + LINES_PER_PAGE - 1) / LINES_PER_PAGE;
+    if(total_pages == 0) total_pages = 1;
     
-    mvprintw(line_count + 1, 0, "Press 'c to continue...");
-    refresh();
-    while(getch() != 'c') {};
+    while(true) {
+        clear();
+        
+        int start_line = current_page * LINES_PER_PAGE;
+        int end_line = std::min(start_line + LINES_PER_PAGE, (int)all_lines.size());
+        
+        int y = 0;
+        for(int i = start_line; i < end_line; i++) {
+            mvprintw(y, 0, "%s", all_lines[i].c_str());
+            y++;
+        }
+        
+        mvprintw(LINES - 2, 0, "Page %d/%d | 'n' next | 'p' prev | 'q' quit", current_page + 1, total_pages);
+        refresh();
+        
+        int ch = getch();
+        if(ch == 'q' || ch == 'c') {
+            break;
+        } else if(ch == 'n' && current_page < total_pages - 1) {
+            current_page++;
+        } else if(ch == 'p' && current_page > 0) {
+            current_page--;
+        }
+    }
 }
 
 void Menu::show_record(FileManager &file_manager) {
@@ -210,7 +210,8 @@ void Menu::insert_record(FileManager &file_manager) {
     unsigned int key;
     std::string record;
     std::stringstream ss(kr_buf);
-    ss >> key;   
+    ss >> key;
+    ss >> std::ws;
     std::getline(ss, record);
 
     if(file_manager.insert(key, record)) {
@@ -292,7 +293,8 @@ Menu::Menu() {
     output_mode();
     cbreak();
     keypad(stdscr, TRUE);
-    scrollok(stdscr, TRUE); 
+    scrollok(stdscr, FALSE); 
+    mousemask(ALL_MOUSE_EVENTS, NULL);
 
     const std::string main_file_name = "main_file";
     const std::string index_file_name = "index_file";
