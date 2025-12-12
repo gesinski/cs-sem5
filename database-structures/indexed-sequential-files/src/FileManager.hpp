@@ -4,13 +4,14 @@
 #include <bits/stdc++.h>
 #include <vector>
 
-#define RECORD_SIZE 28
+#define KEY_SIZE 4
 #define POINTER_SIZE 4
-#define KEY_SIZE sizeof(unsigned int)
 #define DATA_SIZE 24
-#define PAGE_SIZE 320
-#define INDEX_PAGE_SIZE 80
-#define BLOCKING_FACTOR 10
+#define RECORD_SIZE (KEY_SIZE+DATA_SIZE)
+
+#define BLOCKING_FACTOR 4
+#define PAGE_SIZE (BLOCKING_FACTOR*(RECORD_SIZE+POINTER_SIZE))
+#define INDEX_PAGE_SIZE (BLOCKING_FACTOR*(KEY_SIZE+POINTER_SIZE))
 
 class FileManager {
 private:
@@ -22,6 +23,7 @@ public:
     std::fstream overflow_file;
     int disk_reads = 0;
     int disk_writes = 0;
+    int records_main = 0;
     int records_overflow = 0;
 
     FileManager(const std::string &main_file_name, const std::string &index_file_name,  const std::string &overflow_file_name);

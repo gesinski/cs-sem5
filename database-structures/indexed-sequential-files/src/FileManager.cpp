@@ -114,7 +114,8 @@ void FileManager::write_page(struct record record_page[], unsigned int page_num,
     char page[PAGE_SIZE];
     std::memset(page, 0, PAGE_SIZE);
 
-    records_overflow = 0;
+    if(overflow)
+        records_overflow = 0;
     
     for(unsigned int i = 0; i < BLOCKING_FACTOR; i++) {
         std::memcpy(page + i*(RECORD_SIZE+POINTER_SIZE), &record_page[i].key, KEY_SIZE);
@@ -493,7 +494,15 @@ void FileManager::reorganize() {
     disk_reads = 0;
     disk_writes = 0;
 
-    
+    unsigned int s_n = (unsigned int)std::ceil((records_main+records_overflow)/(BLOCKING_FACTOR*alpha));
+    unsigned int si_n = (unsigned int)std::ceil(s_n/BLOCKING_FACTOR);
+
+    std::fstream new_main_file;
+    new_main_file.open("new_main_file", std::ios::in | std::ios::out | std::ios::binary);
+    std::fstream new_index_file;
+    new_index_file.open("new_index_file", std::ios::in | std::ios::out | std::ios::binary);
+    std::fstream new_overflow_file;
+    new_overflow_file.open("new_overflow_file", std::ios::in | std::ios::out | std::ios::binary);
 }
 
 FileManager::~FileManager() {

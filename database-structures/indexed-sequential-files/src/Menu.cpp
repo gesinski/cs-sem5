@@ -1,7 +1,5 @@
 #include "Menu.hpp"
-#include <cstdint>
 #include <cstring>
-#include <string>
 #include <sstream>
 #include <algorithm>
 #include <cctype>
@@ -248,7 +246,10 @@ void Menu::insert_record(FileManager &file_manager) {
         mvprintw(1, 0, "Disk reads: %d", file_manager.disk_reads);
         mvprintw(2, 0, "Disk writes: %d", file_manager.disk_writes);
         mvprintw(3, 0, "Press 'v' to view files or any key to continue...");
+        mvprintw(4, 0, "%d", file_manager.records_overflow);
         refresh();
+
+        file_manager.records_main++;
         
         int button = getch();
         if(button == 'v') {
@@ -256,6 +257,7 @@ void Menu::insert_record(FileManager &file_manager) {
         }
 
         if(file_manager.records_overflow == BLOCKING_FACTOR) {
+            output_mode();
             mvprintw(0, 0, "Reorganization is needed.");
             mvprintw(2, 0, "Press any key to continue...");
             refresh();
