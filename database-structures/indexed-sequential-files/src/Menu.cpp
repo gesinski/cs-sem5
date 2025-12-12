@@ -193,11 +193,39 @@ void Menu::show_record(FileManager &file_manager) {
     std::stringstream ss(key_buf);
     ss >> key; 
 
-    //file_manager.fetch();
+    std::string record = file_manager.fetch(key);
+
+    if(record != "-1") {
+        output_mode();
+        mvprintw(0, 0, "Fetched record:");
+        mvprintw(1, 0, "Key: %u Record: %s", key, record.data());
+        mvprintw(3, 0, "Disk reads: %d", file_manager.disk_reads);
+        mvprintw(4, 0, "Disk writes: %d", file_manager.disk_writes);
+        mvprintw(6, 0, "Press any key to continue...");
+        refresh();
+    } else {
+        output_mode();
+        mvprintw(0, 0, "Wanted record doesn't exist.");
+        mvprintw(2, 0, "Press any key to continue...");
+        refresh();
+    }
+    getch();
 }
 
 void Menu::reorganize_files(FileManager &file_manager) {
+    file_manager.reorganize();
 
+    output_mode();
+    mvprintw(0, 0, "Record reorganized successfully.");
+    mvprintw(1, 0, "Disk reads: %d", file_manager.disk_reads);
+    mvprintw(2, 0, "Disk writes: %d", file_manager.disk_writes);
+    mvprintw(3, 0, "Press 'v' to view files or any key to continue...");
+    refresh();
+        
+    int button = getch();
+    if(button == 'v') {
+        show_files(file_manager);
+    }
 }
 
 void Menu::insert_record(FileManager &file_manager) {
@@ -252,7 +280,50 @@ void Menu::update_record(FileManager &file_manager) {
 }
 
 void Menu::show_records(FileManager &file_manager) {
+    const int LINES_PER_PAGE = 40;
 
+    std::vector<std::string> all_lines = file_manager.fetch_records();
+
+    if(all_lines.size() == 0) {
+        all_lines.push_back("No records have been added.");
+    }
+
+    output_mode();
+    int current_page = 0;
+    int total_pages = (all_lines.size() + LINES_PER_PAGE - 1) / LINES_PER_PAGE;
+    if(total_pages == 0) total_pages = 1;
+    
+    while(true) {
+        clear();
+        
+        int start_line = current_page * LINES_PER_PAGE;
+        int end_line = std::min(start_line + LINES_PER_PAGE, (int)all_lines.size());
+        
+        int y = 0;
+        for(int i = start_line; i < end_line; i++) {
+            mvprintw(y, 0, "%s", all_lines[i].c_str());
+            y++;
+        }
+        
+        mvprintw(LINES - 2, 0, "Page %d/%d | 'n' next | 'p' prev | 'q' quit", current_page + 1, total_pages);
+        refresh();
+        
+        int ch = getch();
+        if(ch == 'q' || ch == 'c') {
+            break;
+        } else if(ch == 'n' && current_page < total_pages - 1) {
+            current_page++;
+        } else if(ch == 'p' && current_page > 0) {
+            current_page--;
+        }
+    }
+    output_mode();
+    mvprintw(0, 0, "Disk operations needed for showing records:");
+    mvprintw(2, 0, "Disk reads: %d", file_manager.disk_reads);
+    mvprintw(3, 0, "Disk writes: %d", file_manager.disk_writes);
+    mvprintw(5, 0, "Press any key to continue...");
+    refresh();
+    getch();
 }
 
 std::string Menu::input_file_name() {

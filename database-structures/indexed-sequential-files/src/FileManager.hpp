@@ -34,11 +34,11 @@ public:
 
     void write_page(struct record[], unsigned int page_num, bool overflow);
 
-    void fetch();
+    std::string fetch(unsigned int key);
 
     bool insert(unsigned int key, std::string record);
 
-    void fetch_records();
+    std::vector<std::string> fetch_records();
 
     void reorganize();
 
