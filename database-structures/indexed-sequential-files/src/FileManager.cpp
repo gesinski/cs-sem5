@@ -494,15 +494,205 @@ void FileManager::reorganize() {
     disk_reads = 0;
     disk_writes = 0;
 
-    unsigned int s_n = (unsigned int)std::ceil((records_main+records_overflow)/(BLOCKING_FACTOR*alpha));
-    unsigned int si_n = (unsigned int)std::ceil(s_n/BLOCKING_FACTOR);
-
     std::fstream new_main_file;
+    new_main_file.open("new_main_file", std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+    new_main_file.close();
     new_main_file.open("new_main_file", std::ios::in | std::ios::out | std::ios::binary);
+
     std::fstream new_index_file;
+    new_index_file.open("new_index_file", std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+    new_index_file.close();
     new_index_file.open("new_index_file", std::ios::in | std::ios::out | std::ios::binary);
-    std::fstream new_overflow_file;
-    new_overflow_file.open("new_overflow_file", std::ios::in | std::ios::out | std::ios::binary);
+
+    main_file.clear();
+    main_file.seekg(0, std::ios::end);
+    std::streamsize main_file_size = main_file.tellg();
+    main_file.seekg(0);
+
+    unsigned int no_main_records = static_cast<unsigned int>(main_file_size / (RECORD_SIZE+POINTER_SIZE));
+    unsigned int new_page_used_slots = 0;
+    unsigned int free_slots = (unsigned int)std::ceil(alpha*BLOCKING_FACTOR);
+    unsigned int new_page_count = 1;
+    unsigned int index_page_records = 0;
+    unsigned int index_page_count = 0;
+    unsigned int ov_pointer = 0;
+
+    struct index_record *index_page = new struct index_record[BLOCKING_FACTOR];
+    for (unsigned int k = 0; k < BLOCKING_FACTOR; k++) {
+        index_page[k].key = 0;
+        index_page[k].page_number = 0;
+    }
+    
+    struct record *new_page = new struct record[BLOCKING_FACTOR];
+    for (unsigned int k = 0; k < BLOCKING_FACTOR; k++) {
+        new_page[k].key = 0;
+        std::memset(new_page[k].data, 0, DATA_SIZE);
+        new_page[k].pointer = 0;
+    }
+
+    struct record *overflow_page = convert_string_to_page(read_page(1, true));
+    struct record *page = convert_string_to_page(read_page(1, false));
+
+    unsigned int current_main_record = 0;
+    while(current_main_record < no_main_records) {
+
+        unsigned int current_page_record =  current_main_record % BLOCKING_FACTOR;
+        
+        if(page[current_page_record].key == 0 && ov_pointer != 0) {
+            current_main_record++;
+            continue;
+        }
+
+        if(new_page_used_slots == free_slots) {
+
+            new_page_used_slots = 0;
+
+            index_page[index_page_records].key = new_page[0].key;
+            index_page[index_page_records].page_number = new_page_count;
+            index_page_records++;
+
+            if(index_page_records == BLOCKING_FACTOR) {
+
+                index_page_records = 0;
+
+                char index_page_buf[INDEX_PAGE_SIZE];
+                std::memset(index_page_buf, 0, INDEX_PAGE_SIZE);
+                        
+                for(unsigned int i = 0; i < BLOCKING_FACTOR; i++) {
+                    std::memcpy(index_page_buf + i*(KEY_SIZE+POINTER_SIZE), &index_page[i].key, KEY_SIZE);
+                    std::memcpy(index_page_buf + i*(KEY_SIZE+POINTER_SIZE) + KEY_SIZE, &index_page[i].page_number, POINTER_SIZE);
+    {
+        std::ofstream dbg("insert_debug.log", std::ios::app);
+        dbg << "index1 called key=" << index_page[i].key << " page number='" << index_page[i].page_number << "' index_page_count=" << index_page_count << "\n";
+    }
+                }
+                    
+                std::streampos offset = static_cast<std::streampos>(INDEX_PAGE_SIZE) * (index_page_count);
+
+                new_index_file.seekp(offset);
+                new_index_file.write(index_page_buf, INDEX_PAGE_SIZE);
+                new_index_file.flush();
+                disk_writes++;
+
+                index_page_count++;
+
+                delete[] index_page;
+                index_page = new struct index_record[BLOCKING_FACTOR];
+                for (unsigned int k = 0; k < BLOCKING_FACTOR; k++) {
+                    index_page[k].key = 0;
+                    index_page[k].page_number = 0;
+                }
+            }
+
+            char page_buf[PAGE_SIZE];
+            std::memset(page_buf, 0, PAGE_SIZE);
+                    
+            for(unsigned int i = 0; i < BLOCKING_FACTOR; i++) {
+                std::memcpy(page_buf + i*(RECORD_SIZE+POINTER_SIZE), &new_page[i].key, KEY_SIZE);
+                std::memcpy(page_buf + i*(RECORD_SIZE+POINTER_SIZE) + KEY_SIZE, &new_page[i].data, DATA_SIZE);
+                std::memcpy(page_buf + i*(RECORD_SIZE+POINTER_SIZE) + RECORD_SIZE, &new_page[i].pointer, POINTER_SIZE);
+    {
+        std::ofstream dbg("insert_debug.log", std::ios::app);
+        dbg << "main1 called key=" << new_page[i].key << " record='" << new_page[i].data << "' new_page_count=" << new_page_count << "\n";
+    }
+            }
+
+            std::streampos offset = static_cast<std::streampos>(PAGE_SIZE) * (new_page_count-1);
+                    
+            new_main_file.seekp(offset);
+            new_main_file.write(page_buf, PAGE_SIZE);
+            new_main_file.flush();
+            disk_writes++;
+            new_page_count++;
+
+            delete[] new_page;
+            new_page = new struct record[BLOCKING_FACTOR];
+            for (unsigned int k = 0; k < BLOCKING_FACTOR; k++) {
+                new_page[k].key = 0;
+                std::memset(new_page[k].data, 0, DATA_SIZE);
+                new_page[k].pointer = 0;
+            }
+        }
+        if(ov_pointer != 0) {
+            new_page[new_page_used_slots].key = overflow_page[ov_pointer-1].key;
+            std::memset(new_page[new_page_used_slots].data, 0, DATA_SIZE);
+            std::memcpy(new_page[new_page_used_slots].data, overflow_page[ov_pointer-1].data, DATA_SIZE);
+            new_page[new_page_used_slots].pointer = 0;
+            new_page_used_slots++;
+
+            ov_pointer = overflow_page[ov_pointer-1].pointer;
+        } else {
+            new_page[new_page_used_slots].key = page[current_page_record].key;
+            std::memset(new_page[new_page_used_slots].data, 0, DATA_SIZE);
+            std::memcpy(new_page[new_page_used_slots].data, page[current_page_record].data, DATA_SIZE);
+            new_page[new_page_used_slots].pointer = 0;
+            new_page_used_slots++;
+            current_main_record++;
+
+            ov_pointer = page[current_page_record].pointer;
+        }
+    }
+
+    if(new_page_used_slots > 0) {
+        char page_buf[PAGE_SIZE];
+        std::memset(page_buf, 0, PAGE_SIZE);
+        for(unsigned int i = 0; i < new_page_used_slots; i++) {
+            std::memcpy(page_buf + i*(RECORD_SIZE+POINTER_SIZE), &new_page[i].key, KEY_SIZE);
+            std::memcpy(page_buf + i*(RECORD_SIZE+POINTER_SIZE) + KEY_SIZE, &new_page[i].data, DATA_SIZE);
+            std::memcpy(page_buf + i*(RECORD_SIZE+POINTER_SIZE) + RECORD_SIZE, &new_page[i].pointer, POINTER_SIZE);// debug log
+    {
+        std::ofstream dbg("insert_debug.log", std::ios::app);
+        dbg << "main2 called key=" << new_page[i].key << " record='" << new_page[i].data << "' new_page_count=" << new_page_count << "\n";
+    }
+        }
+        std::streampos offset = static_cast<std::streampos>(PAGE_SIZE) * (new_page_count-1);
+        new_main_file.seekp(offset);
+        new_main_file.write(page_buf, PAGE_SIZE);
+        new_main_file.flush();
+        disk_writes++;
+
+    } 
+
+    if(index_page_records > 0) {
+        index_page[index_page_records].key = new_page[0].key;
+        index_page[index_page_records].page_number = new_page_count;
+        index_page_records++;
+
+        char index_page_buf[INDEX_PAGE_SIZE];
+        std::memset(index_page_buf, 0, INDEX_PAGE_SIZE);
+        for(unsigned int i = 0; i < index_page_records; i++) {
+            std::memcpy(index_page_buf + i*(KEY_SIZE+POINTER_SIZE), &index_page[i].key, KEY_SIZE);
+            std::memcpy(index_page_buf + i*(KEY_SIZE+POINTER_SIZE) + KEY_SIZE, &index_page[i].page_number, POINTER_SIZE);
+            {
+        std::ofstream dbg("insert_debug.log", std::ios::app);
+        dbg << "index2 called key=" << index_page[i].key << " page number='" << index_page[i].page_number << "' index_page_count=" << index_page_count << "\n";
+    }
+        }
+        std::streampos offset = static_cast<std::streampos>(index_page_count * INDEX_PAGE_SIZE);
+        new_index_file.seekp(offset);
+        new_index_file.write(index_page_buf, INDEX_PAGE_SIZE);
+        new_index_file.flush();
+        disk_writes++;
+    }
+
+    main_file.close();
+    index_file.close();
+
+    std::remove("main_file");      
+    std::remove("index_file");
+
+    std::rename("new_main_file", "main_file");
+    std::rename("new_index_file", "index_file");
+
+    main_file.open("main_file", std::ios::in | std::ios::out | std::ios::binary);
+    index_file.open("index_file", std::ios::in | std::ios::out | std::ios::binary);
+
+    char zero_overflow[PAGE_SIZE];
+    std::memset(zero_overflow, 0, PAGE_SIZE);
+    overflow_file.seekp(0);
+    overflow_file.write(zero_overflow, PAGE_SIZE);
+    overflow_file.flush();
+    records_overflow = 0;
 }
 
 FileManager::~FileManager() {

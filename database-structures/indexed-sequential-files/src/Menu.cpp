@@ -246,10 +246,7 @@ void Menu::insert_record(FileManager &file_manager) {
         mvprintw(1, 0, "Disk reads: %d", file_manager.disk_reads);
         mvprintw(2, 0, "Disk writes: %d", file_manager.disk_writes);
         mvprintw(3, 0, "Press 'v' to view files or any key to continue...");
-        mvprintw(4, 0, "%d", file_manager.records_overflow);
         refresh();
-
-        file_manager.records_main++;
         
         int button = getch();
         if(button == 'v') {
@@ -357,8 +354,82 @@ std::string Menu::input_file_name() {
     return FILE_NAME;
 }
 
-void Menu::include_test_file(FileManager &file_manger) {
+void Menu::include_test_file(FileManager &file_manager) {
     std::string test_records_file = "test_file"; //input_file_name();
+
+    std::ifstream test_file(test_records_file, std::ios::binary);
+
+    char buf[29];
+
+    int button;
+    while (test_file.read(buf, sizeof(buf))) {
+
+        char operation;
+        unsigned int key;
+        char name[25]; 
+
+        std::memcpy(&operation, buf, 1);
+        std::memcpy(&key, buf + 1, sizeof(unsigned int));
+
+        std::memcpy(name, buf + 5, 24);
+        name[24] = '\0';  
+
+        std::string fullname(name);
+
+        auto pos = fullname.find_last_not_of(' ');
+        if (pos != std::string::npos) {
+            fullname.erase(pos + 1);
+        } else {
+            fullname.clear(); 
+        }
+
+        if (operation == 'i') {
+            output_mode();
+            mvprintw(0, 0, "Next operation is insertion of record: %u %s ", key, fullname.data());
+            mvprintw(2, 0, "Press 's' to skip getting operations from file.");
+            mvprintw(3, 0, "Press any key to continue...");
+            refresh();
+
+            button = getch();
+            if(button == 's')
+                break;
+
+            if(file_manager.insert(key, fullname)) {
+                output_mode();
+                mvprintw(0, 0, "Record inserted successfully.");
+                mvprintw(1, 0, "Disk reads: %d", file_manager.disk_reads);
+                mvprintw(2, 0, "Disk writes: %d", file_manager.disk_writes);
+                mvprintw(3, 0, "Press 'v' to view files or any key to continue...");
+                mvprintw(4, 0, "%d", file_manager.records_overflow);
+                refresh();
+                
+                button = getch();
+                if(button == 'v') {
+                    show_files(file_manager);
+                }
+
+                if(file_manager.records_overflow == BLOCKING_FACTOR) {
+                    output_mode();
+                    mvprintw(0, 0, "Reorganization is needed.");
+                    mvprintw(2, 0, "Press any key to continue...");
+                    refresh();
+                    getch();
+                    reorganize_files(file_manager);
+                }
+            } else {
+                output_mode();
+                mvprintw(0, 0, "You entered key that already exists.");
+                mvprintw(2, 0, "Press any key to continue...");
+                refresh();
+                getch();
+            }
+        }
+        else if (operation == 'd') {
+            // file_manager.remove(id);  // if you have delete
+        }
+    }
+
+    test_file.close();
 }
 
 Menu::Menu() {

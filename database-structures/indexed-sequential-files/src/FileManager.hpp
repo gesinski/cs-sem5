@@ -23,7 +23,6 @@ public:
     std::fstream overflow_file;
     int disk_reads = 0;
     int disk_writes = 0;
-    int records_main = 0;
     int records_overflow = 0;
 
     FileManager(const std::string &main_file_name, const std::string &index_file_name,  const std::string &overflow_file_name);
