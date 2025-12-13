@@ -95,7 +95,7 @@ void Menu::show_files(FileManager &file_manager) {
                     text_buf[DATA_SIZE] = '\0';
                     std::memcpy(&pointer, page_data.data() + offset + RECORD_SIZE, POINTER_SIZE);
                     
-                    if(key == 0) {
+                    if(key == 0 || std::strncmp(text_buf, "-1", 2) == 0) {
                         snprintf(buf, sizeof(buf), "  Record %u: [EMPTY]", r+1);
                     } else {
                         snprintf(buf, sizeof(buf), "  Record %u: Key: %u, Data: %s, Pointer: %u", r+1, key, text_buf, pointer);
@@ -137,7 +137,7 @@ void Menu::show_files(FileManager &file_manager) {
                     text_buf[DATA_SIZE] = '\0';
                     std::memcpy(&pointer, page_data.data() + offset + RECORD_SIZE, POINTER_SIZE);
                     
-                    if(key == 0) {
+                    if(key == 0 || std::strncmp(text_buf, "-1", 2) == 0) {
                         snprintf(buf, sizeof(buf), "  Record %u: [EMPTY]", r+1);
                     } else {
                         snprintf(buf, sizeof(buf), "  Record %u: Key: %u, Data: %s, Pointer: %u", r+1, key, text_buf, pointer);
@@ -271,11 +271,72 @@ void Menu::insert_record(FileManager &file_manager) {
 }
 
 void Menu::delete_record(FileManager &file_manager) {
+    input_mode();
+    mvprintw(0, 0, "Enter key to delete: ");
 
+    char kr_buf[255];
+    getnstr(kr_buf, 256);
+
+    unsigned int key;
+    std::stringstream ss(kr_buf);
+    ss >> key;
+    ss >> std::ws;
+
+    if(file_manager.delete_record(key)) {
+        output_mode();
+        mvprintw(0, 0, "Record %u deleted successfully.", key);
+        mvprintw(1, 0, "Disk reads: %d", file_manager.disk_reads);
+        mvprintw(2, 0, "Disk writes: %d", file_manager.disk_writes);
+        mvprintw(3, 0, "Press 'v' to view files or any key to continue...");
+        refresh();
+        
+        int button = getch();
+        if(button == 'v') {
+            show_files(file_manager);
+        }
+    } else {
+        output_mode();
+        mvprintw(0, 0, "You entered key that doesn't exists.");
+        mvprintw(2, 0, "Press any key to continue...");
+        refresh();
+        getch();
+    }
 }
 
 void Menu::update_record(FileManager &file_manager) {
+    input_mode();
+    mvprintw(0, 0, "Enter key to update and new record: ");
 
+    char kr_buf[255];
+    getnstr(kr_buf, 256);
+
+    unsigned int key;
+    std::string record;
+    std::stringstream ss(kr_buf);
+    ss >> key;
+    ss >> std::ws;
+    std::getline(ss, record);
+
+    if(file_manager.update(key, record)) {
+        output_mode();
+        mvprintw(0, 0, "Record updated successfully.");
+        mvprintw(1, 0, "Disk reads: %d", file_manager.disk_reads);
+        mvprintw(2, 0, "Disk writes: %d", file_manager.disk_writes);
+        mvprintw(3, 0, "Press 'v' to view files or any key to continue...");
+        refresh();
+        
+        int button = getch();
+        if(button == 'v') {
+            show_files(file_manager);
+        }
+
+    } else {
+        output_mode();
+        mvprintw(0, 0, "The key that you entered doesn't exists.");
+        mvprintw(2, 0, "Press any key to continue...");
+        refresh();
+        getch();
+    }
 }
 
 void Menu::show_records(FileManager &file_manager) {
@@ -355,33 +416,40 @@ std::string Menu::input_file_name() {
 }
 
 void Menu::include_test_file(FileManager &file_manager) {
-    std::string test_records_file = "test_file"; //input_file_name();
+    std::string test_records_file = input_file_name();
 
     std::ifstream test_file(test_records_file, std::ios::binary);
 
-    char buf[29];
-
+    char operation;
     int button;
     int count = 1;
-    while (test_file.read(buf, sizeof(buf))) {
+    while (test_file.read(&operation, sizeof(char))) {
 
-        char operation;
         unsigned int key;
-        char name[25]; 
+        std::string fullname;
+        if(operation == 'i' || operation == 'u') {
 
-        std::memcpy(&operation, buf, 1);
-        std::memcpy(&key, buf + 1, sizeof(unsigned int));
+            char buf[28];
+            test_file.read(buf, sizeof(buf));
+            char name[25]; 
 
-        std::memcpy(name, buf + 5, 24);
-        name[24] = '\0';  
+            std::memcpy(&key, buf, sizeof(unsigned int));
 
-        std::string fullname(name);
+            std::memcpy(name, buf + 4, 24);
+            name[24] = '\0';  
 
-        auto pos = fullname.find_last_not_of(' ');
-        if (pos != std::string::npos) {
-            fullname.erase(pos + 1);
+            fullname = std::string(name); 
+
+            auto pos = fullname.find_last_not_of(' ');
+            if (pos != std::string::npos) {
+                fullname.erase(pos + 1);
+            } else {
+                fullname.clear(); 
+            }
         } else {
-            fullname.clear(); 
+            char buf[4];
+            test_file.read(buf, sizeof(buf));
+            std::memcpy(&key, buf, sizeof(unsigned int));
         }
 
         if (operation == 'i') {
@@ -389,7 +457,7 @@ void Menu::include_test_file(FileManager &file_manager) {
             mvprintw(0, 0, "Next operation is insertion of record: %u %s ", key, fullname.data());
             mvprintw(2, 0, "Press 's' to skip getting operations from file.");
             mvprintw(3, 0, "Press any key to continue...");
-            mvprintw(4, 0, "RECORD NO %d", count);
+            mvprintw(4, 0, "Operation NO %d", count);
             refresh();
             count++;
 
@@ -426,9 +494,71 @@ void Menu::include_test_file(FileManager &file_manager) {
                 refresh();
                 getch();
             }
-        }
-        else if (operation == 'd') {
-            // file_manager.remove(id);  // if you have delete
+        } else if (operation == 'd') {
+            output_mode();
+            mvprintw(0, 0, "Next operation is deletion of record: %u", key);
+            mvprintw(2, 0, "Press 's' to skip getting operations from file.");
+            mvprintw(3, 0, "Press any key to continue...");
+            mvprintw(4, 0, "Operation NO %d", count);
+            refresh();
+            count++;
+
+            button = getch();
+            if(button == 's')
+                break;
+
+            if(file_manager.delete_record(key)) {
+                output_mode();
+                mvprintw(0, 0, "Record %u deleted successfully.", key);
+                mvprintw(1, 0, "Disk reads: %d", file_manager.disk_reads);
+                mvprintw(2, 0, "Disk writes: %d", file_manager.disk_writes);
+                mvprintw(3, 0, "Press 'v' to view files or any key to continue...");
+                refresh();
+                    
+                int button = getch();
+                if(button == 'v') {
+                    show_files(file_manager);
+                }
+            } else {
+                output_mode();
+                mvprintw(0, 0, "You entered key that doesn't exists.");
+                mvprintw(2, 0, "Press any key to continue...");
+                refresh();
+                getch();
+            }
+        } else if (operation == 'u') {
+            output_mode();
+            mvprintw(0, 0, "Next operation is update of record: %u %s ", key, fullname.data());
+            mvprintw(2, 0, "Press 's' to skip getting operations from file.");
+            mvprintw(3, 0, "Press any key to continue...");
+            mvprintw(4, 0, "Operation NO %d", count);
+            refresh();
+            count++;
+
+            button = getch();
+            if(button == 's')
+                break;
+
+            if(file_manager.update(key, fullname)) {
+                output_mode();
+                mvprintw(0, 0, "Record updated successfully.");
+                mvprintw(1, 0, "Disk reads: %d", file_manager.disk_reads);
+                mvprintw(2, 0, "Disk writes: %d", file_manager.disk_writes);
+                mvprintw(3, 0, "Press 'v' to view files or any key to continue...");
+                refresh();
+                
+                int button = getch();
+                if(button == 'v') {
+                    show_files(file_manager);
+                }
+
+            } else {
+                output_mode();
+                mvprintw(0, 0, "The key that you entered doesn't exists.");
+                mvprintw(2, 0, "Press any key to continue...");
+                refresh();
+                getch();
+            }
         }
     }
 

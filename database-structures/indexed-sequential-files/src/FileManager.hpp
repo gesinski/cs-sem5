@@ -43,9 +43,9 @@ public:
 
     void reorganize();
 
-    // void delete();
+    bool delete_record(unsigned int key);
 
-    // void update();
+    bool update(unsigned int key, std::string record);
 
     ~FileManager();
 };

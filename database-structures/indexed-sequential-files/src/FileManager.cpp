@@ -289,6 +289,7 @@ bool FileManager::insert(unsigned int key, std::string record) {
                     } else {
                         index_page = convert_string_to_index_page(read_index_page(next_index_page));
                         fetched_key2 = index_page[0].key;
+                        delete[] index_page;
                     }
 
                     index_page = convert_string_to_index_page(read_index_page(index_page_num));
@@ -334,6 +335,14 @@ bool FileManager::insert(unsigned int key, std::string record) {
                                 unsigned int head = pointer;
 
                                 if (head != 0 && overflow_page[head - 1].key == key) {
+                                    if(std::strncmp(overflow_page[head - 1].data, "-1", 2) == 0){
+                                        overflow_page[head - 1].key = key;
+                                        std::memset(overflow_page[head - 1].data, 0, DATA_SIZE);
+                                        std::memcpy(overflow_page[head - 1].data, record.data(), DATA_SIZE);
+                                        write_page(overflow_page, 1, true);
+
+                                        return true;
+                                    }
                                     return false;
                                 }
 
@@ -370,6 +379,14 @@ bool FileManager::insert(unsigned int key, std::string record) {
                                     curr = overflow_page[prev - 1].pointer;
                                 }
                                 if (curr != 0 && overflow_page[curr - 1].key == key) {
+                                    if(std::strncmp(overflow_page[curr - 1].data, "-1", 2) == 0){
+                                        overflow_page[curr - 1].key = key;
+                                        std::memset(overflow_page[curr - 1].data, 0, DATA_SIZE);
+                                        std::memcpy(overflow_page[curr - 1].data, record.data(), DATA_SIZE);
+                                        write_page(overflow_page, 1, true);
+
+                                        return true;
+                                    }
                                     return false;
                                 }
 
@@ -385,6 +402,12 @@ bool FileManager::insert(unsigned int key, std::string record) {
                                 return true;
                             }
                         } else if(key == fetched_key) {
+                            if(std::strncmp(page[record_num].data, "-1", 2) == 0) {
+                                std::memset(page[record_num].data, 0, DATA_SIZE);
+                                std::memcpy(page[record_num].data, record.data(), DATA_SIZE);
+                                write_page(page, page_num, false);
+                                return true;
+                            }
                             return false;
                         } else if(key == fetched_key2) {
                             return false;
@@ -451,6 +474,14 @@ bool FileManager::insert(unsigned int key, std::string record) {
                                 unsigned int head = pointer;
 
                                 if (head != 0 && overflow_page[head - 1].key == key) {
+                                    if(std::strncmp(overflow_page[head - 1].data, "-1", 2) == 0){
+                                        overflow_page[head - 1].key = key;
+                                        std::memset(overflow_page[head - 1].data, 0, DATA_SIZE);
+                                        std::memcpy(overflow_page[head - 1].data, record.data(), DATA_SIZE);
+                                        write_page(overflow_page, 1, true);
+
+                                        return true;
+                                    }
                                     return false;
                                 }
 
@@ -487,6 +518,14 @@ bool FileManager::insert(unsigned int key, std::string record) {
                                     curr = overflow_page[prev - 1].pointer;
                                 }
                                 if (curr != 0 && overflow_page[curr - 1].key == key) {
+                                    if(std::strncmp(overflow_page[curr - 1].data, "-1", 2) == 0){
+                                        overflow_page[curr - 1].key = key;
+                                        std::memset(overflow_page[curr - 1].data, 0, DATA_SIZE);
+                                        std::memcpy(overflow_page[curr - 1].data, record.data(), DATA_SIZE);
+                                        write_page(overflow_page, 1, true);
+
+                                        return true;
+                                    }
                                     return false;
                                 }
 
@@ -551,7 +590,7 @@ std::vector<std::string> FileManager::fetch_records() {
                         std::memcpy(&pointer, &main_page[no_record].pointer, POINTER_SIZE);
                                     
                         records_count++;
-                        if(key != 0) 
+                        if(key != 0 || std::strncmp(text_buf, "-1", 2) != 0) 
                             snprintf(buf, sizeof(buf), "Record %u: Key: %u, Data: %s, Pointer: %u", records_count, key, text_buf, pointer);
                             
                         records.push_back(buf);
@@ -565,7 +604,7 @@ std::vector<std::string> FileManager::fetch_records() {
                                 std::memcpy(&pointer, &overflow_page[pointer-1].pointer, POINTER_SIZE);
 
                                 records_count++;
-                                if(key != 0) 
+                                if(key != 0 || std::strncmp(text_buf, "-1", 2) != 0) 
                                     snprintf(buf, sizeof(buf), "Record %u: Key: %u, Data: %s, Pointer: %u", records_count, key, text_buf, pointer);
                                     
                                 records.push_back(buf);
@@ -639,7 +678,7 @@ void FileManager::reorganize() {
         dbg << "current_page_record called key=" << page[current_page_record].key << "Ov pointer" <<ov_pointer << "\n";
     }
         
-        if(page[current_page_record].key == 0 && ov_pointer == 0) {
+        if((page[current_page_record].key == 0 || std::strncmp(page[current_page_record].data, "-1", 2) == 0) && ov_pointer == 0) {
             current_main_record++;
             continue;
         }
@@ -714,7 +753,7 @@ void FileManager::reorganize() {
                 new_page[k].pointer = 0;
             }
         }
-        if(ov_pointer != 0) {
+        if(ov_pointer != 0 && std::strncmp(overflow_page[ov_pointer-1].data, "-1", 2) != 0) {
             new_page[new_page_used_slots].key = overflow_page[ov_pointer-1].key;
             std::memset(new_page[new_page_used_slots].data, 0, DATA_SIZE);
             std::memcpy(new_page[new_page_used_slots].data, overflow_page[ov_pointer-1].data, DATA_SIZE);
@@ -727,7 +766,7 @@ void FileManager::reorganize() {
     }
 
             ov_pointer = overflow_page[ov_pointer-1].pointer;
-        } else if(page[current_page_record].key != 0){
+        } else if(page[current_page_record].key != 0 && std::strncmp(page[current_page_record].data, "-1", 2) != 0){
             new_page[new_page_used_slots].key = page[current_page_record].key;
             std::memset(new_page[new_page_used_slots].data, 0, DATA_SIZE);
             std::memcpy(new_page[new_page_used_slots].data, page[current_page_record].data, DATA_SIZE);
@@ -809,6 +848,143 @@ void FileManager::reorganize() {
     overflow_file.write(zero_overflow, PAGE_SIZE);
     overflow_file.flush();
     records_overflow = 0;
+}
+
+bool FileManager::delete_record(unsigned int key) {
+    disk_reads = 0;
+    disk_writes = 0;
+
+    index_file.clear();
+    index_file.seekg(0, std::ios::end);
+    std::streamsize index_file_size = index_file.tellg();
+    unsigned int index_page_num = static_cast<unsigned int>(index_file_size / INDEX_PAGE_SIZE);
+
+    for(unsigned int index_page_count = 0; index_page_count < index_page_num; index_page_count++) {
+        struct index_record *index_page = convert_string_to_index_page(read_index_page(index_page_count+1));
+        
+        for(unsigned int index_record = 0; index_record < BLOCKING_FACTOR; index_record++) {
+
+            unsigned int fetched_key = index_page[index_record].key;
+            if(key < fetched_key && index_record == 0) {
+                return false;
+            } else if(key >= fetched_key) {
+                if(key == fetched_key) {
+                    std::string deletion_mark = "-1";
+                    struct record *main_page = convert_string_to_page(read_page(index_page[index_record].page_number, false));
+                    std::memcpy(main_page[0].data, deletion_mark.data(), DATA_SIZE);
+                    write_page(main_page, index_page[index_record].page_number, false);
+                    reorganize();
+                    delete[] main_page;
+                    return true;
+                }
+                if(index_record < BLOCKING_FACTOR-1) {
+                    fetched_key = index_page[index_record+1].key;
+
+                    if(key > fetched_key && fetched_key != 0) {
+                        continue;
+                    } else {
+                        struct record *main_page = convert_string_to_page(read_page(index_page[index_record].page_number, false));
+
+                        for(unsigned int main_record = 0; main_record < BLOCKING_FACTOR; main_record++) {
+                            fetched_key = main_page[main_record].key;
+
+                            if(key == fetched_key) {
+                                std::string deletion_mark = "-1";
+                                std::memcpy(main_page[main_record].data, deletion_mark.data(), DATA_SIZE);
+                                write_page(main_page, index_page[index_record].page_number, false);
+                                return true;
+                            } else if(key > fetched_key) {
+                                if(key < main_page[main_record+1].key) {
+                                    struct record *overflow_page = convert_string_to_page(read_page(1, true));
+                                    unsigned int overflow_pointer = main_page[main_record].pointer;
+                                    unsigned int count = 0;
+                                    while(count < BLOCKING_FACTOR) {
+                                        if(overflow_pointer == 0) 
+                                            return false;
+                                        if(key == overflow_page[overflow_pointer-1].key) {
+                                            std::string deletion_mark = "-1";
+                                            std::memcpy(overflow_page[overflow_pointer-1].data, deletion_mark.data(), DATA_SIZE);
+                                            write_page(overflow_page, 1, true);
+                                            return true;
+                                        }
+                                        overflow_pointer = overflow_page[overflow_pointer-1].pointer;
+                                        count++;
+                                    }
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool FileManager::update(unsigned int key, std::string record) {
+    disk_reads = 0;
+    disk_writes = 0;
+
+    index_file.clear();
+    index_file.seekg(0, std::ios::end);
+    std::streamsize index_file_size = index_file.tellg();
+    unsigned int index_page_num = static_cast<unsigned int>(index_file_size / INDEX_PAGE_SIZE);
+
+    for(unsigned int index_page_count = 0; index_page_count < index_page_num; index_page_count++) {
+        struct index_record *index_page = convert_string_to_index_page(read_index_page(index_page_count+1));
+        
+        for(unsigned int index_record = 0; index_record < BLOCKING_FACTOR; index_record++) {
+
+            unsigned int fetched_key = index_page[index_record].key;
+            if(key < fetched_key && index_record == 0) {
+                return false;
+            } else if(key >= fetched_key) {
+                if(index_record < BLOCKING_FACTOR-1) {
+                    fetched_key = index_page[index_record+1].key;
+
+                    if(key > fetched_key && fetched_key != 0) {
+                        continue;
+                    } else {
+                        struct record *main_page = convert_string_to_page(read_page(index_page[index_record].page_number, false));
+
+                        for(unsigned int main_record = 0; main_record < BLOCKING_FACTOR; main_record++) {
+                            fetched_key = main_page[main_record].key;
+
+                            if(key == fetched_key) {
+                                if(std::strncmp(main_page[main_record].data, "-1", 2) == 0) 
+                                    return false;
+                                std::memcpy(main_page[main_record].data, record.data(), DATA_SIZE);
+                                write_page(main_page, index_page[index_record].page_number, false);
+                                return true;
+                            } else if(key > fetched_key) {
+                                if(key < main_page[main_record+1].key) {
+                                    struct record *overflow_page = convert_string_to_page(read_page(1, true));
+                                    unsigned int overflow_pointer = main_page[main_record].pointer;
+                                    unsigned int count = 0;
+                                    while(count < BLOCKING_FACTOR) {
+                                        if(overflow_pointer == 0) 
+                                            return false;
+                                        if(key == overflow_page[overflow_pointer-1].key) {
+                                            if(std::strncmp(overflow_page[overflow_pointer-1].data, "-1", 2) == 0) 
+                                                return false;
+                                            std::memcpy(overflow_page[overflow_pointer-1].data, record.data(), DATA_SIZE);
+                                            write_page(overflow_page, 1, true);
+                                            return true;
+                                        }
+                                        overflow_pointer = overflow_page[overflow_pointer-1].pointer;
+                                        count++;
+                                    }
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
 
 FileManager::~FileManager() {
