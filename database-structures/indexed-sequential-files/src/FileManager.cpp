@@ -274,13 +274,25 @@ bool FileManager::insert(unsigned int key, std::string record) {
         unsigned int index_page_num = 1;
         struct index_record *index_page = convert_string_to_index_page(read_index_page(index_page_num));
         
-        while(index_page[index_page_num-1].key != 0) {
+        while(index_page[0].key != 0) {
             for(unsigned int i = 0; i < BLOCKING_FACTOR; i++) {
                 unsigned int fetched_key = index_page[i].key, fetched_key2;
                 if(i+1 < BLOCKING_FACTOR)
                     fetched_key2 = index_page[i+1].key;
-                else 
-                    fetched_key2 = 0;
+                else {
+                    unsigned int next_index_page = index_page_num + 1;
+                    index_file.seekg(0, std::ios::end);
+                    std::streampos size = index_file.tellg();
+
+                    if ((next_index_page - 1) * INDEX_PAGE_SIZE >= size) {
+                        fetched_key2 = 0;   
+                    } else {
+                        index_page = convert_string_to_index_page(read_index_page(next_index_page));
+                        fetched_key2 = index_page[0].key;
+                    }
+
+                    index_page = convert_string_to_index_page(read_index_page(index_page_num));
+                }
 
                 unsigned int page_num = index_page[i].page_number;
                 if(key > fetched_key && (key < fetched_key2 || fetched_key2 == 0)) {
@@ -374,6 +386,8 @@ bool FileManager::insert(unsigned int key, std::string record) {
                             }
                         } else if(key == fetched_key) {
                             return false;
+                        } else if(key == fetched_key2) {
+                            return false;
                         } else if(key > fetched_key && record_num == BLOCKING_FACTOR-1 && fetched_key2 == 0) {
                             int free_index_slot = -1;
                             for (unsigned int j = 0; j < BLOCKING_FACTOR; j++) {
@@ -411,17 +425,93 @@ bool FileManager::insert(unsigned int key, std::string record) {
 
                                 return true;
                             }
+                        } else if(key > fetched_key && record_num == BLOCKING_FACTOR-1) {
+                            unsigned int pointer = page[record_num-1].pointer;
+
+                            struct record *overflow_page = convert_string_to_page(read_page(1, true));
+
+                            if(pointer == 0) {
+                                for(unsigned int ov_record_num = 0; ov_record_num < BLOCKING_FACTOR; ov_record_num++) {
+                                    
+                                    unsigned int overflow_key = overflow_page[ov_record_num].key;
+                                    
+                                    if(overflow_key == 0) {
+                                        overflow_page[ov_record_num].key = key;
+                                        std::memset(overflow_page[ov_record_num].data, 0, DATA_SIZE);
+                                        std::memcpy(overflow_page[ov_record_num].data, record.data(), DATA_SIZE);
+                                        write_page(overflow_page, 1, true);
+                                    
+                                        page[record_num].pointer = ov_record_num+1;
+                                        write_page(page, page_num, false);
+
+                                        return true;
+                                    }
+                                }
+                            } else {
+                                unsigned int head = pointer;
+
+                                if (head != 0 && overflow_page[head - 1].key == key) {
+                                    return false;
+                                }
+
+                                int free_slot = -1;
+                                for (unsigned int ov_record_num = 0; ov_record_num < BLOCKING_FACTOR; ov_record_num++) {
+                                    if (overflow_page[ov_record_num].key == 0) {
+                                        free_slot = static_cast<int>(ov_record_num);
+                                        break;
+                                    }
+                                }
+
+                                if (free_slot == -1) {
+                                    return false;
+                                }
+
+                                if (head == 0 || key < overflow_page[head - 1].key) {
+                                    overflow_page[free_slot].key = key;
+                                    std::memset(overflow_page[free_slot].data, 0, DATA_SIZE);
+                                    std::memcpy(overflow_page[free_slot].data, record.data(), DATA_SIZE);
+                                    overflow_page[free_slot].pointer = head; 
+
+                                    page[record_num-1].pointer = free_slot + 1; 
+
+                                    write_page(overflow_page, 1, true);
+                                    write_page(page, page_num, false);
+                                    return true;
+                                }
+
+                                unsigned int prev = head;
+                                unsigned int curr = overflow_page[prev - 1].pointer;
+
+                                while (curr != 0 && overflow_page[curr - 1].key < key) {
+                                    prev = curr;
+                                    curr = overflow_page[prev - 1].pointer;
+                                }
+                                if (curr != 0 && overflow_page[curr - 1].key == key) {
+                                    return false;
+                                }
+
+                                overflow_page[free_slot].key = key;
+                                std::memset(overflow_page[free_slot].data, 0, DATA_SIZE);
+                                std::memcpy(overflow_page[free_slot].data, record.data(), DATA_SIZE);
+                                overflow_page[free_slot].pointer = curr; 
+
+                                overflow_page[prev - 1].pointer = free_slot + 1;
+
+                                write_page(overflow_page, 1, true);
+                                write_page(page, page_num, false);
+                                return true;
+                            }
                         }
                     }
                 } else if(key == fetched_key || key == fetched_key2) {
                     return false;
-                }
+                } 
             }
             index_page_num++;
             index_page = convert_string_to_index_page(read_index_page(index_page_num));
         }
     }
-    return true;
+    return false;
 }
 
 std::vector<std::string> FileManager::fetch_records() {
@@ -516,6 +606,7 @@ void FileManager::reorganize() {
     unsigned int index_page_records = 0;
     unsigned int index_page_count = 0;
     unsigned int ov_pointer = 0;
+    unsigned int page_count = 1;
 
     struct index_record *index_page = new struct index_record[BLOCKING_FACTOR];
     for (unsigned int k = 0; k < BLOCKING_FACTOR; k++) {
@@ -531,14 +622,24 @@ void FileManager::reorganize() {
     }
 
     struct record *overflow_page = convert_string_to_page(read_page(1, true));
-    struct record *page = convert_string_to_page(read_page(1, false));
+    struct record *page;
 
     unsigned int current_main_record = 0;
     while(current_main_record < no_main_records) {
 
         unsigned int current_page_record =  current_main_record % BLOCKING_FACTOR;
+
+        if(current_page_record == 0 && ov_pointer == 0) {
+            page = convert_string_to_page(read_page(page_count, false));
+            page_count++;
+        }
+
+        {
+        std::ofstream dbg("insert_debug.log", std::ios::app);
+        dbg << "current_page_record called key=" << page[current_page_record].key << "Ov pointer" <<ov_pointer << "\n";
+    }
         
-        if(page[current_page_record].key == 0 && ov_pointer != 0) {
+        if(page[current_page_record].key == 0 && ov_pointer == 0) {
             current_main_record++;
             continue;
         }
@@ -620,8 +721,13 @@ void FileManager::reorganize() {
             new_page[new_page_used_slots].pointer = 0;
             new_page_used_slots++;
 
+            {
+        std::ofstream dbg("insert_debug.log", std::ios::app);
+        dbg << "ovferlow key key=" <<  overflow_page[ov_pointer-1].key << "\n";
+    }
+
             ov_pointer = overflow_page[ov_pointer-1].pointer;
-        } else {
+        } else if(page[current_page_record].key != 0){
             new_page[new_page_used_slots].key = page[current_page_record].key;
             std::memset(new_page[new_page_used_slots].data, 0, DATA_SIZE);
             std::memcpy(new_page[new_page_used_slots].data, page[current_page_record].data, DATA_SIZE);
@@ -634,30 +740,36 @@ void FileManager::reorganize() {
     }
 
     if(new_page_used_slots > 0) {
-        char page_buf[PAGE_SIZE];
-        std::memset(page_buf, 0, PAGE_SIZE);
-        for(unsigned int i = 0; i < new_page_used_slots; i++) {
-            std::memcpy(page_buf + i*(RECORD_SIZE+POINTER_SIZE), &new_page[i].key, KEY_SIZE);
-            std::memcpy(page_buf + i*(RECORD_SIZE+POINTER_SIZE) + KEY_SIZE, &new_page[i].data, DATA_SIZE);
-            std::memcpy(page_buf + i*(RECORD_SIZE+POINTER_SIZE) + RECORD_SIZE, &new_page[i].pointer, POINTER_SIZE);// debug log
-    {
-        std::ofstream dbg("insert_debug.log", std::ios::app);
-        dbg << "main2 called key=" << new_page[i].key << " record='" << new_page[i].data << "' new_page_count=" << new_page_count << "\n";
-    }
+        if(new_page[0].key != 0) {
+            char page_buf[PAGE_SIZE];
+            std::memset(page_buf, 0, PAGE_SIZE);
+            for(unsigned int i = 0; i < new_page_used_slots; i++) {
+                std::memcpy(page_buf + i*(RECORD_SIZE+POINTER_SIZE), &new_page[i].key, KEY_SIZE);
+                std::memcpy(page_buf + i*(RECORD_SIZE+POINTER_SIZE) + KEY_SIZE, &new_page[i].data, DATA_SIZE);
+                std::memcpy(page_buf + i*(RECORD_SIZE+POINTER_SIZE) + RECORD_SIZE, &new_page[i].pointer, POINTER_SIZE);// debug log
+        {
+            std::ofstream dbg("insert_debug.log", std::ios::app);
+            dbg << "main2 called key=" << new_page[i].key << " record='" << new_page[i].data << "' new_page_count=" << new_page_count << "\n";
         }
-        std::streampos offset = static_cast<std::streampos>(PAGE_SIZE) * (new_page_count-1);
-        new_main_file.seekp(offset);
-        new_main_file.write(page_buf, PAGE_SIZE);
-        new_main_file.flush();
-        disk_writes++;
-
+            }
+            std::streampos offset = static_cast<std::streampos>(PAGE_SIZE) * (new_page_count-1);
+            new_main_file.seekp(offset);
+            new_main_file.write(page_buf, PAGE_SIZE);
+            new_main_file.flush();
+            disk_writes++;
+        }
     } 
 
-    if(index_page_records > 0) {
-        index_page[index_page_records].key = new_page[0].key;
-        index_page[index_page_records].page_number = new_page_count;
-        index_page_records++;
-
+    if(index_page_records > 0 || new_page[0].key != 0) {
+        if(new_page[0].key != 0) {
+            index_page[index_page_records].key = new_page[0].key;
+            index_page[index_page_records].page_number = new_page_count;
+            index_page_records++;
+            {
+        std::ofstream dbg("insert_debug.log", std::ios::app);
+        dbg << "index new_page[0].key called key=" << new_page[0].key << " page number='" << new_page_count << "' index_page_count=" << index_page_count << "\n";
+    }
+        }
         char index_page_buf[INDEX_PAGE_SIZE];
         std::memset(index_page_buf, 0, INDEX_PAGE_SIZE);
         for(unsigned int i = 0; i < index_page_records; i++) {
@@ -674,6 +786,10 @@ void FileManager::reorganize() {
         new_index_file.flush();
         disk_writes++;
     }
+    {
+            std::ofstream dbg("insert_debug.log", std::ios::app);
+            dbg << "\n";
+        }
 
     main_file.close();
     index_file.close();

@@ -362,6 +362,7 @@ void Menu::include_test_file(FileManager &file_manager) {
     char buf[29];
 
     int button;
+    int count = 1;
     while (test_file.read(buf, sizeof(buf))) {
 
         char operation;
@@ -388,7 +389,9 @@ void Menu::include_test_file(FileManager &file_manager) {
             mvprintw(0, 0, "Next operation is insertion of record: %u %s ", key, fullname.data());
             mvprintw(2, 0, "Press 's' to skip getting operations from file.");
             mvprintw(3, 0, "Press any key to continue...");
+            mvprintw(4, 0, "RECORD NO %d", count);
             refresh();
+            count++;
 
             button = getch();
             if(button == 's')
@@ -400,7 +403,7 @@ void Menu::include_test_file(FileManager &file_manager) {
                 mvprintw(1, 0, "Disk reads: %d", file_manager.disk_reads);
                 mvprintw(2, 0, "Disk writes: %d", file_manager.disk_writes);
                 mvprintw(3, 0, "Press 'v' to view files or any key to continue...");
-                mvprintw(4, 0, "%d", file_manager.records_overflow);
+                mvprintw(4, 0, "Records in overflow: %d", file_manager.records_overflow);
                 refresh();
                 
                 button = getch();
