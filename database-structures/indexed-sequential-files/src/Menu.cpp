@@ -289,7 +289,7 @@ void Menu::delete_record(FileManager &file_manager) {
         mvprintw(2, 0, "Disk writes: %d", file_manager.disk_writes);
         mvprintw(3, 0, "Press 'v' to view files or any key to continue...");
         refresh();
-        
+                
         int button = getch();
         if(button == 'v') {
             show_files(file_manager);
@@ -323,7 +323,7 @@ void Menu::update_record(FileManager &file_manager) {
         mvprintw(1, 0, "Disk reads: %d", file_manager.disk_reads);
         mvprintw(2, 0, "Disk writes: %d", file_manager.disk_writes);
         mvprintw(3, 0, "Press 'v' to view files or any key to continue...");
-        refresh();
+        refresh();       
         
         int button = getch();
         if(button == 'v') {
@@ -427,16 +427,21 @@ void Menu::include_test_file(FileManager &file_manager) {
 
         unsigned int key;
         std::string fullname;
+
+        char buf[28];
+        test_file.read(buf, 28);
+        char name[25]; 
+
+
+        std::memcpy(&key, buf, 4);
+        std::memcpy(name, buf + 4, 24);
+
+        std::memcpy(&key, buf, 4);
+
+        std::memcpy(name, buf + 4, 24);
+        name[24] = '\0';  
+        
         if(operation == 'i' || operation == 'u') {
-
-            char buf[28];
-            test_file.read(buf, sizeof(buf));
-            char name[25]; 
-
-            std::memcpy(&key, buf, sizeof(unsigned int));
-
-            std::memcpy(name, buf + 4, 24);
-            name[24] = '\0';  
 
             fullname = std::string(name); 
 
@@ -446,10 +451,6 @@ void Menu::include_test_file(FileManager &file_manager) {
             } else {
                 fullname.clear(); 
             }
-        } else {
-            char buf[4];
-            test_file.read(buf, sizeof(buf));
-            std::memcpy(&key, buf, sizeof(unsigned int));
         }
 
         if (operation == 'i') {
