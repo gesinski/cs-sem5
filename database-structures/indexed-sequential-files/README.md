@@ -102,7 +102,7 @@ is appended. The text is stored on a single line, separated by a single space. D
 ### Example (Human-Readable Form)
 
 
-\begin{verbatim}
+```
 i 5 Zuniga Janet
 i 26 Johnston Daisy
 i 73 Benson Jon
@@ -112,7 +112,7 @@ d 26
 u 5 Flowers Gabriel
 u 73 Savage Lorraine
 d 14
-\end{verbatim}
+```
 
 
 In its actual form, the test file is **binary** and not human-readable, as it contains no whitespace and stores data in binary format.
@@ -129,3 +129,7 @@ After completing an operation, the program reports whether it was successful and
 - **Disk reads** — number of data blocks read from disk  
 
 A single disk operation corresponds to reading or writing one block containing **`b` records**.
+
+## Bugs
+
+While deleting element that have a pointer to overflow section. The files from overflow section are also deleted after reorganization.
